@@ -382,7 +382,7 @@ def StandardCabbImaging(ImagingDetails):
 		#this loop copies the uv files and the region files from the source folder to the destination folder to perform the work.
 
 		#Copy Region File
-		RegionFile = str(Image) + "." + ImagingDetails['OffsetName'] + ".region"  
+		RegionFile = str(ImageName) + "." + ImagingDetails['OffsetName'] + ".region"  
 
 		print "cp " + ImagingDetails['SourcePath'] + "/" + str(RegionFile) + " " + ImagingDetails['DestinationLink'] + "/" + str(RegionFile)
 		os.system("cp " + str(SourceRegionFile) + " " + str(DestinationRegionFile))
