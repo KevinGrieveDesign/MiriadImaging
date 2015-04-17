@@ -61,22 +61,19 @@ ImagingDetails['DestinationPath'] = "0533-6954/1Phase-1Amp-9700"
 #ImagingDetails['DestinationPath'] = "0539-7001/1Phase-1Amp-6000"
 
 
-
-
-
 ImagingDetails['DestinationLink'] = "i"
 
 #ImagingDetails['Images'] = ["0519-6902","0525-6938","0529-6653","0533-6954","0535-6600","0535-7035","0537-6916","0539-6944","0539-7001"]
 
-#ImagingDetails['ProjectNum'] = ["0519-6902"]
-#ImagingDetails['ProjectNum'] = ["0525-6938"]
-#ImagingDetails['ProjectNum'] = ["0529-6653"]
-ImagingDetails['ProjectNum'] = ["0533-6954"]
-#ImagingDetails['ProjectNum'] = ["0535-6600"]
-#ImagingDetails['ProjectNum'] = ["0535-7035"]
-#ImagingDetails['ProjectNum'] = ["0537-6916"]
-#ImagingDetails['ProjectNum'] = ["0539-6944"]
-#ImagingDetails['ProjectNum'] = ["0539-7001"]
+#ImagingDetails['Images'] = ["0519-6902"]
+#ImagingDetails['Images'] = ["0525-6938"]
+#ImagingDetails['Images'] = ["0529-6653"]
+ImagingDetails['Images'] = ["0533-6954"]
+#ImagingDetails['Images'] = ["0535-6600"]
+#ImagingDetails['Images'] = ["0535-7035"]
+#ImagingDetails['Images'] = ["0537-6916"]
+#ImagingDetails['Images'] = ["0539-6944"]
+#ImagingDetails['Images'] = ["0539-7001"]
 
 #================= Invert =================
 
