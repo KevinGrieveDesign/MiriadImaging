@@ -26,52 +26,91 @@ ProcList = []
 
 #================= Misc =================
 
-ImagingDetails['MaxProcesses'] = 7
-ImagingDetails['ProjectNum'] = "C2648"
+ImagingDetails['MaxProcesses'] = 6
+#ImagingDetails['ProjectNum'] = "CX310"
 
-ImagingDetails['FWHM'] = "25.97,22.13"
-ImagingDetails['Cell'] = "6.96,6.96"
-ImagingDetails['PositionAngle'] = "-1.3"
+#ImagingDetails['ProjectNum'] = "0519-6902"
+#ImagingDetails['ProjectNum'] = "0525-6938"
+#ImagingDetails['ProjectNum'] = "0529-6653"
+ImagingDetails['ProjectNum'] = "0533-6954"
+#ImagingDetails['ProjectNum'] = "0535-6600"
+#ImagingDetails['ProjectNum'] = "0535-7035"
+#ImagingDetails['ProjectNum'] = "0537-6916"
+#ImagingDetails['ProjectNum'] = "0539-6944"
+#ImagingDetails['ProjectNum'] = "0539-7001"
+
+ImagingDetails['FWHM'] = ""
+ImagingDetails['Cell'] = ""
+ImagingDetails['PositionAngle'] = ""
 
 #================= Locations =================
 
-ImagingDetails['SourcePath'] = "SourceTest"
-ImagingDetails['DestinationPath'] = "DestinationTest"
+#ImagingDetails['SourcePath'] = "Source"
+#ImagingDetails['SourcePath'] = "Source-1Phase"
+#ImagingDetails['SourcePath'] = "Source-2Phase"
+ImagingDetails['SourcePath'] = "Source-1Phase-1Amp"
+
+#ImagingDetails['DestinationPath'] = "0519-6902/1Phase-1Amp-6000"
+#ImagingDetails['DestinationPath'] = "0525-6938/1Phase-1Amp-6000"
+#ImagingDetails['DestinationPath'] = "0529-6653/1Phase-1Amp-6000"
+ImagingDetails['DestinationPath'] = "0533-6954/1Phase-1Amp-9700"
+#ImagingDetails['DestinationPath'] = "0535-6600/1Phase-1Amp-6000"
+#ImagingDetails['DestinationPath'] = "0535-7035/1Phase-1Amp-6000"
+#ImagingDetails['DestinationPath'] = "0537-6916/1Phase-1Amp-6000"
+#ImagingDetails['DestinationPath'] = "0539-6944/1Phase-1Amp-6000"
+#ImagingDetails['DestinationPath'] = "0539-7001/1Phase-1Amp-6000"
+
+
+
+
+
 ImagingDetails['DestinationLink'] = "i"
 
-ImagingDetails['Images'] = ["pnt_1","pnt_2"]
-#ImagingDetails['Images'] = ["pnt_1","pnt_2","pnt_3","pnt_4","pnt_5","pnt_6","pnt_7","pnt_8","pnt_9","pnt_10","pnt_11","pnt_12","pnt_13","pnt_14","pnt_15","pnt_16","pnt_17","pnt_18","pnt_19","pnt_20","pnt_21","pnt_22","pnt_23","pnt_24","pnt_25","pnt_26","pnt_27","pnt_28","pnt_29","pnt_30","pnt_31","pnt_32","pnt_33","pnt_34","pnt_35","pnt_36","pnt_37","pnt_38","pnt_39","pnt_40","pnt_41","pnt_42","pnt_43","pnt_44","pnt_45","pnt_46","pnt_47","pnt_48","pnt_49","pnt_50","pnt_51","pnt_52","pnt_53","pnt_54","pnt_55","pnt_56","pnt_57","pnt_58","pnt_59","pnt_60","pnt_61","pnt_62","pnt_63","pnt_64","pnt_65","pnt_66","pnt_67","pnt_68","pnt_69","pnt_70","pnt_71","pnt_72","pnt_73","pnt_74","pnt_75","pnt_76","pnt_77"]
+#ImagingDetails['Images'] = ["0519-6902","0525-6938","0529-6653","0533-6954","0535-6600","0535-7035","0537-6916","0539-6944","0539-7001"]
+
+#ImagingDetails['ProjectNum'] = ["0519-6902"]
+#ImagingDetails['ProjectNum'] = ["0525-6938"]
+#ImagingDetails['ProjectNum'] = ["0529-6653"]
+ImagingDetails['ProjectNum'] = ["0533-6954"]
+#ImagingDetails['ProjectNum'] = ["0535-6600"]
+#ImagingDetails['ProjectNum'] = ["0535-7035"]
+#ImagingDetails['ProjectNum'] = ["0537-6916"]
+#ImagingDetails['ProjectNum'] = ["0539-6944"]
+#ImagingDetails['ProjectNum'] = ["0539-7001"]
 
 #================= Invert =================
 
-ImagingDetails['Imsize'] = "3,3,beam"
+ImagingDetails['Imsize'] = "9700"
+
 ImagingDetails['Offset'] = "05:17:14.64,-66:58:58.20"
+ImagingDetails['OffsetName'] = "05.17_-66.58"
+
 ImagingDetails['Robust'] = "0"
 ImagingDetails['Frequency'] = "2100"
 ImagingDetails['Stokes'] = "i"
-ImagingDetails['ActiveAntennasName'] = "12345"
-ImagingDetails['ActiveAntennas'] = "\"-ant(6)\""
+ImagingDetails['ActiveAntennasName'] = "123456"
+ImagingDetails['ActiveAntennas'] = ""
 ImagingDetails['InvertOptions'] = "double,mfs,sdb,mosaic"
 
 #================= Selfcal =================
 #===== Phase =====
 
-ImagingDetails['PhaseSelfCalAmount'] = 2
+ImagingDetails['PhaseSelfCalAmount'] = 0
 ImagingDetails['PhaseSelfCalOptions'] = "mfs,phase"
 
 ImagingDetails['PhaseSelfCalIterations'] = 5500
-ImagingDetails['PhaseSelfCalSigma'] = [50,25]
+ImagingDetails['PhaseSelfCalSigma'] = [15]
 
 ImagingDetails['PhaseSelfCalBin'] = 1
 ImagingDetails['PhaseSelfCalInterval'] = 0.1
 
 #=== Amplitude ===
 
-ImagingDetails['AmplitudeSelfCalAmount'] = 1
+ImagingDetails['AmplitudeSelfCalAmount'] = 0
 ImagingDetails['AmplitudeSelfCalOptions'] = "mfs,amp"
 
 ImagingDetails['AmplitudeSelfCalIterations'] = 5500
-ImagingDetails['AmplitudeSelfCalSigma'] = [15]
+ImagingDetails['AmplitudeSelfCalSigma'] = [5]
 
 ImagingDetails['AmplitudeSelfCalBin'] = 1
 ImagingDetails['AmplitudeSelfCalInterval'] = 0.1
@@ -91,6 +130,88 @@ ImagingDetails['RestorOptions'] = "mfs"
 ImagingDetails['Bandwidth'] = 2.049
 
 #================= End Reading Data =================
+
+
+def WriteLog(ImagingDetails,TotalTime):
+	logFile = open(ImagingDetails["DestinationLink"] + "/" + ImagingDetails["ProjectNum"] + "-ImagingLog.html", "a") 
+
+	#Evernote xml header. 
+	logFile.write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>")
+	logFile.write("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">")
+	logFile.write("<html>")
+	logFile.write("<head>")
+	logFile.write("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"/>")
+	logFile.write("<meta name=\"exporter-version\" content=\"Evernote Mac 6.0.5 (451190)\"/>")
+	logFile.write("<meta name=\"keywords\" content=\"" + ImagingDetails["ProjectNum"] + "\"/>")
+	logFile.write("<meta name=\"author\" content=\"krgrieve2@live.com.au\"/>")
+	logFile.write("<meta name=\"created\" content=\"" + time.strftime("%Y-%m-%d %I:%M:%S") + " +0000\"/>")
+	logFile.write("<meta name=\"source\" content=\"desktop.mac\"/>")
+	logFile.write("<meta name=\"updated\" content=\""+ time.strftime("%Y-%m-%d %I:%M:%S") + " +0000\"/>")
+	logFile.write("<title>" + ImagingDetails["ProjectNum"] + " Imaging Log </title>")
+	logFile.write("</head>")
+	logFile.write("<body>")
+
+	logFile.write("<div><b><span style=\"font-size: 16px;\">General</span></b></div>")
+	logFile.write("<div>Project Number: {0}</div>".format(ImagingDetails['ProjectNum']))
+	logFile.write("<div>Source Folder: {0}</div>".format(ImagingDetails['SourcePath']))
+	logFile.write("<div>Destination Folder: {0}</div>".format(ImagingDetails['DestinationPath']))
+	logFile.write("<div>Images: {0}</div>".format(ImagingDetails['Images']))
+
+	logFile.write("<div>&nbsp</div>")
+	logFile.write("<div><b><span style=\"font-size: 16px;\">Invert</span></b></div>")
+	logFile.write("<div>Imsize: {0}</div>".format(ImagingDetails['Imsize']))
+	logFile.write("<div>Offset: {0}</div>".format(ImagingDetails['Offset']))
+	logFile.write("<div>Robust: {0}</div>".format(ImagingDetails['Robust']))
+	logFile.write("<div>Frequency: {0}</div>".format(ImagingDetails['Frequency']))
+	logFile.write("<div>Stokes: {0}</div>".format(ImagingDetails['Stokes']))
+	logFile.write("<div>Antennas Used: {0}</div>".format(ImagingDetails['ActiveAntennasName']))
+	logFile.write("<div>Antennas Used: {0}</div>".format(ImagingDetails['ActiveAntennas']))
+	logFile.write("<div>Invert Options: {0}</div>".format(ImagingDetails['InvertOptions']))
+
+	logFile.write("<div>&nbsp</div>")
+	logFile.write("<div><b><span style=\"font-size: 16px;\">Phase Selfcal</span></b></div>")
+	logFile.write("<div>Amount: {0}</div>".format(ImagingDetails['PhaseSelfCalAmount']))
+	logFile.write("<div>Options: {0}</div>".format(ImagingDetails['PhaseSelfCalOptions']))
+	logFile.write("<div>Iterations: {0}</div>".format(ImagingDetails['PhaseSelfCalIterations']))
+	logFile.write("<div>Sigma: {0}</div>".format(ImagingDetails['PhaseSelfCalSigma']))
+	logFile.write("<div>Bin: {0}</div>".format(ImagingDetails['PhaseSelfCalBin']))
+	logFile.write("<div>Interval: {0}</div>".format(ImagingDetails['PhaseSelfCalInterval']))
+
+	logFile.write("<div>&nbsp</div>")
+	logFile.write("<div><b><span style=\"font-size: 16px;\">Amplitude Selfcal</span></b></div>")
+	logFile.write("<div>Amount: {0}</div>".format(ImagingDetails['AmplitudeSelfCalAmount']))
+	logFile.write("<div>Options: {0}</div>".format(ImagingDetails['AmplitudeSelfCalOptions']))
+	logFile.write("<div>Iterations: {0}</div>".format(ImagingDetails['AmplitudeSelfCalIterations']))
+	logFile.write("<div>Sigma: {0}</div>".format(ImagingDetails['AmplitudeSelfCalSigma']))
+	logFile.write("<div>Bin: {0}</div>".format(ImagingDetails['AmplitudeSelfCalBin']))
+	logFile.write("<div>Interval: {0}</div>".format(ImagingDetails['AmplitudeSelfCalInterval']))
+
+	logFile.write("<div>&nbsp</div>")
+	logFile.write("<div><b><span style=\"font-size: 16px;\">MfClean</span></b></div>")
+	logFile.write("<div>Iterations: {0}</div>".format(ImagingDetails['Iterations']))
+	logFile.write("<div>Sigma: {0}</div>".format(ImagingDetails['Sigma']))
+	logFile.write("<div>Region: {0}</div>".format(ImagingDetails['CleanRegion']))
+
+	logFile.write("<div>&nbsp</div>")
+	logFile.write("<div><b><span style=\"font-size: 16px;\">Restor</span></b></div>")
+	logFile.write("<div>Options: {0}</div>".format(ImagingDetails['RestorOptions']))
+
+	logFile.write("<div>&nbsp</div>")
+	logFile.write("<div><b><span style=\"font-size: 16px;\">Linmos</span></b></div>")
+	logFile.write("<div>Options: {0}</div>".format(ImagingDetails['Bandwidth']))
+	
+	logFile.write("<div>&nbsp</div>")
+	logFile.write("<div><b><span style=\"font-size: 16px;\">Misc</span></b></div>")
+	logFile.write("<div>FWHM: {0}</div>".format(ImagingDetails['FWHM']))
+	logFile.write("<div>Position Angle: {0}</div>".format(ImagingDetails['PositionAngle']))
+	logFile.write("<div>Cell: {0}</div>".format(ImagingDetails['Cell']))
+	logFile.write("<div>Time Taken: {0}</div>".format(TotalTime))
+
+	logFile.write("</body>")
+	logFile.write("</html>")
+
+	logFile.close()
+
 
 #Check to see if a particular item/folder exists within a particular folder. default folder to check is current one
 def ReadFolder(ItemToFind, Path=os.getcwd()):
@@ -129,22 +250,23 @@ def Invert(Image, ImagingDetails):
 	Beam = str(Image) + ".beam." + str(ImagingDetails['RoundNum'])
 	LogFile = str(Image) + ".invertlog." + str(ImagingDetails['RoundNum'])
 
-	Task = "invert "
-	Task = Task + " vis='" + UVaver + "'"
-	Task = Task + " map='" + Map + "'"
-	Task = Task + " beam='" + Beam + "'"
-	Task = Task + " imsize='" + str(ImagingDetails['Imsize']) + "'"
-	Task = Task + " offset='" + str(ImagingDetails['Offset'])+ "'"
-	Task = Task + " robust='" + str(ImagingDetails['Robust']) + "'"
-	Task = Task + " select='" + str(ImagingDetails['ActiveAntennas']) + "'"
-	Task = Task + " fwhm='" + str(ImagingDetails['FWHM']) + "'"
-	Task = Task + " cell='" + str(ImagingDetails['Cell']) + "'"
-	Task = Task + " stokes='" + str(ImagingDetails['Stokes']) + "'"
-	Task = Task + " options='" + str(ImagingDetails['InvertOptions']) + "'"
-	Task = Task + " > " + LogFile
-	
-	print Task
-	ProcList.append(Popen(Task, shell=True))
+	if  ReadFolder(Map, ImagingDetails['DestinationLink'] + "/") == False and ReadFolder(Beam, ImagingDetails['DestinationLink'] + "/") == False and ReadFolder(LogFile, ImagingDetails['DestinationLink'] + "/") == False:
+		Task = "invert "
+		Task = Task + " vis='" + UVaver + "'"
+		Task = Task + " map='" + Map + "'"
+		Task = Task + " beam='" + Beam + "'"
+		Task = Task + " imsize='" + str(ImagingDetails['Imsize']) + "'"
+		Task = Task + " offset='" + str(ImagingDetails['Offset'])+ "'"
+		Task = Task + " robust='" + str(ImagingDetails['Robust']) + "'"
+		Task = Task + " select='" + str(ImagingDetails['ActiveAntennas']) + "'"
+		Task = Task + " fwhm='" + str(ImagingDetails['FWHM']) + "'"
+		Task = Task + " cell='" + str(ImagingDetails['Cell']) + "'"
+		Task = Task + " stokes='" + str(ImagingDetails['Stokes']) + "'"
+		Task = Task + " options='" + str(ImagingDetails['InvertOptions']) + "'"
+		Task = Task + " > " + LogFile
+		
+		print Task
+		ProcList.append(Popen(Task, shell=True))
 
 #run the task MFClean. This reads the invert log file and then gets the Theoretical RMS to then times by an amount (i.e 5 sigma) to se the clean cutoff level.
 def MFClean(Image, ImagingDetails, SelfCal):
@@ -152,6 +274,7 @@ def MFClean(Image, ImagingDetails, SelfCal):
 	Beam = str(Image) + ".beam." + str(ImagingDetails['RoundNum'])
 	Model = str(Image) + ".model." + str(ImagingDetails['RoundNum'])
 	LogFile = str(Image) + ".invertlog." + str(ImagingDetails['RoundNum'])
+	RegionFile = str(Image) + "." + ImagingDetails['OffsetName'] + ".region"  #Destination/0001-0001.2100.05.17_-66.58.region
 	
 	TheoreticalRMS = ""
 	TheoreticalRMSArray = []
@@ -167,14 +290,20 @@ def MFClean(Image, ImagingDetails, SelfCal):
 	Task = Task + " map='" + Map + "'"
 	Task = Task + " beam='" + Beam + "'"
 	Task = Task + " out='" + Model + "'"
-	Task = Task + " region='" + ImagingDetails['CleanRegion'] + "'"
-
+	
+	#Set the stopping conditions 
 	if SelfCal == True:
 		Task = Task + " niters='" + str(ImagingDetails['SelfCalIterations']) + "'"
 		Task = Task + " cutoff='" + str(float(ImagingDetails['SelfCalSigma']) * float(TheoreticalRMS)) + "'"
 	else:
 		Task = Task + " niters='" + str(ImagingDetails['Iterations']) + "'"
 		Task = Task + " cutoff='" + str(float(ImagingDetails['Sigma']) * float(TheoreticalRMS)) + "'"
+
+	#Set the area to clean/selfcal on. 
+	if SelfCal == True and ReadFolder(RegionFile[RegionFile.find('/')+1:],ImagingDetails['DestinationLink']) == True:
+		Task = Task + " region='@" + str(RegionFile) + "'"
+	else:
+		Task = Task + " region='" + str(ImagingDetails['CleanRegion']) + "'" 
 
 	print Task
 	ProcList.append(Popen(Task, shell=True))				
@@ -218,7 +347,7 @@ def Restor(Image, ImagingDetails):
 	Task = Task + " model='" + Model + "'"
 	Task = Task + " out='" + Restor + "'"
 	Task = Task + " options='" + ImagingDetails['RestorOptions'] + "'"
-	Task = Task + " fwhm='" + str(ImagingDetails['Robust']) + "'" 
+	Task = Task + " fwhm='" + str(ImagingDetails['FWHM']) + "'" 
 	Task = Task + " pa='" + str(ImagingDetails['PositionAngle']) + "'"
 
 	print Task
@@ -226,7 +355,15 @@ def Restor(Image, ImagingDetails):
 
 #Run the task Linmos
 def Linmos(ImagingDetails):
-	Linmos = ImagingDetails['DestinationLink'] + "/" + str(ImagingDetails['ProjectNum']) + ".pbcorr"
+	Linmos = ImagingDetails['DestinationLink'] 
+	Linmos += "/"  + str(ImagingDetails['ProjectNum']) 
+	Linmos += ".R-" + str(ImagingDetails['Robust'])
+	Linmos += ".S-" + str(ImagingDetails['Stokes'])
+	Linmos += "." + str(ImagingDetails['ActiveAntennasName'])
+	Linmos += ".Pha-" + str(ImagingDetails['PhaseSelfCalAmount'])
+	Linmos += ".Amp-" + str(ImagingDetails['AmplitudeSelfCalAmount'])
+	Linmos += "." + str(ImagingDetails['OffsetName'])
+	Linmos += ".pbcorr"
 
 	Task = "linmos "
 	Task = Task + " in='" + ImagingDetails['DestinationLink'] + "/*restor*'"
@@ -236,20 +373,33 @@ def Linmos(ImagingDetails):
 	print Task
 	ProcList.append(Popen(Task, shell=True))
 
-#Standard CABB Pipeline. UVaver, Invert, MFClean, SelfCal (optional - send to start. ), Restor, Linmos
+#=====================================================================================================================
+#========Standard CABB Pipeline. UVaver, Invert, MFClean, SelfCal (optional - send to start. ), Restor, Linmos========
+#=====================================================================================================================
 def StandardCabbImaging(ImagingDetails):
 	ImagingDetails['RoundNum'] = 1
 
-	#===============Run UVaver to apply Calibrators=================
+	#===============Run UVaver to apply Calibrators and Copy the region File to the destination=================
+
 	for ImageName in ImagingDetails['Images']:
+		#this loop copies the uv files and the region files from the source folder to the destination folder to perform the work.
+
+		#Copy Region File
+		RegionFile = str(Image) + "." + ImagingDetails['OffsetName'] + ".region"  
+
+		print "cp " + ImagingDetails['SourcePath'] + "/" + str(RegionFile) + " " + ImagingDetails['DestinationLink'] + "/" + str(RegionFile)
+		os.system("cp " + str(SourceRegionFile) + " " + str(DestinationRegionFile))
+
+		#perform the uvaver on the files
 		CheckProc(ImagingDetails['MaxProcesses'])
 		UVaver(ImageName + "." + str(ImagingDetails['Frequency']), ImagingDetails);
 	CheckProc(0)
 
+	#set a default amount incase the following for loop is skipped. 
+	ImagingDetails['SelfCalAmount'] = 0
 	
 	for RoundNum in range(1,ImagingDetails['PhaseSelfCalAmount'] + ImagingDetails['AmplitudeSelfCalAmount'] + 1):
 		#Assign the options depending on what round we are processing.
-
 		ImagingDetails['RoundNum'] = RoundNum
 
 		# functions (such as mfclean and selfcal will use the values stored below. They will be allied dynamically depedning on what type of self cal is taking place. )
@@ -304,7 +454,7 @@ def StandardCabbImaging(ImagingDetails):
 		CheckProc(0)
 
 	#======================================================================================
-	#======================================================================================
+	#============================Start the Final Imaging===================================
 	#======================================================================================
 
 	if ImagingDetails['SelfCalAmount'] >= 1:
@@ -346,12 +496,15 @@ if ReadFolder(ImagingDetails['DestinationLink']) == False:
 
 ImagingDetails['MaxProcesses'] -= 1
 
+
 #using the arguments from the usercall, run a selection of imaging tasks.
 if TaskSet == 1:
 	StandardCabbImaging(ImagingDetails);
 
 CheckProc(0);
 
+#Write the Log file in a html format to import into Evernote 
+WriteLog(ImagingDetails,str(datetime.now()-startTime))
 os.system("rm " + ImagingDetails['DestinationLink'])
 
 print(      "\n\n\n\n+=========================Finished=========================+\n"       )
