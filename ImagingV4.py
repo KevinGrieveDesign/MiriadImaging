@@ -27,57 +27,64 @@ ProcList = []
 #================= Misc =================
 
 ImagingDetails['MaxProcesses'] = 6
-#ImagingDetails['ProjectNum'] = "CX310"
+ImagingDetails['ProjectNum'] = "CX310-DAY6"
 
 #ImagingDetails['ProjectNum'] = "0519-6902"
 #ImagingDetails['ProjectNum'] = "0525-6938"
 #ImagingDetails['ProjectNum'] = "0529-6653"
-ImagingDetails['ProjectNum'] = "0533-6954"
+#ImagingDetails['ProjectNum'] = "0533-6954"
 #ImagingDetails['ProjectNum'] = "0535-6600"
 #ImagingDetails['ProjectNum'] = "0535-7035"
 #ImagingDetails['ProjectNum'] = "0537-6916"
 #ImagingDetails['ProjectNum'] = "0539-6944"
 #ImagingDetails['ProjectNum'] = "0539-7001"
+#ImagingDetails['ProjectNum'] = "0547-6942"
 
-ImagingDetails['FWHM'] = ""
-ImagingDetails['Cell'] = ""
-ImagingDetails['PositionAngle'] = ""
+ImagingDetails['FWHM'] = "4.15,3.86"
+ImagingDetails['Cell'] = "0.8676114,0.8676114"
+ImagingDetails['PositionAngle'] = "-0.8"
 
 #================= Locations =================
 
-#ImagingDetails['SourcePath'] = "Source"
+ImagingDetails['SourcePath'] = "Source"
 #ImagingDetails['SourcePath'] = "Source-1Phase"
 #ImagingDetails['SourcePath'] = "Source-2Phase"
-ImagingDetails['SourcePath'] = "Source-1Phase-1Amp"
+#ImagingDetails['SourcePath'] = "Source-1Phase-1Amp"
 
-#ImagingDetails['DestinationPath'] = "0519-6902/1Phase-1Amp-6000"
+#ImagingDetails['DestinationPath'] = "Done-1Phase-9700"
+ImagingDetails['DestinationPath'] = "Done-1Phase-6000"
+
+#ImagingDetails['DestinationPath'] = "0519-6902-Current/1Phase-8000"
 #ImagingDetails['DestinationPath'] = "0525-6938/1Phase-1Amp-6000"
 #ImagingDetails['DestinationPath'] = "0529-6653/1Phase-1Amp-6000"
-ImagingDetails['DestinationPath'] = "0533-6954/1Phase-1Amp-9700"
+#ImagingDetails['DestinationPath'] = "0533-6954/1Phase-1Amp-9700"
 #ImagingDetails['DestinationPath'] = "0535-6600/1Phase-1Amp-6000"
-#ImagingDetails['DestinationPath'] = "0535-7035/1Phase-1Amp-6000"
+#ImagingDetails['DestinationPath'] = "0535-7035/1Phase-1Amp-6000-BetterClean"
 #ImagingDetails['DestinationPath'] = "0537-6916/1Phase-1Amp-6000"
 #ImagingDetails['DestinationPath'] = "0539-6944/1Phase-1Amp-6000"
-#ImagingDetails['DestinationPath'] = "0539-7001/1Phase-1Amp-6000"
+#ImagingDetails['DestinationPath'] = "0539-7001-Current/1Phase-6000"
+#ImagingDetails['DestinationPath'] = "0547-6942-Current/1Phase-6000"
 
+ImagingDetails['DestinationLink'] = "a"
 
-ImagingDetails['DestinationLink'] = "i"
+ImagingDetails['Images'] = ["0448-6659","0454-6712","0505-6754","0505-6808","0507-7024","0509-6730","0509-6840","0511-6709","0512-6716","0513-6731","0513-6740"]
 
-#ImagingDetails['Images'] = ["0519-6902","0525-6938","0529-6653","0533-6954","0535-6600","0535-7035","0537-6916","0539-6944","0539-7001"]
+#ImagingDetails['Images'] = ["0519-6902","0525-6938","0529-6653","0533-6954","0535-6600","0535-7035","0537-6916","0539-6944","0539-7001","0547-6942"]
+#ImagingDetails['Images'] = ["0519-6902","0529-6653","0533-6954","0535-7035","0539-7001","0547-6942"]
 
 #ImagingDetails['Images'] = ["0519-6902"]
 #ImagingDetails['Images'] = ["0525-6938"]
 #ImagingDetails['Images'] = ["0529-6653"]
-ImagingDetails['Images'] = ["0533-6954"]
+#ImagingDetails['Images'] = ["0533-6954"]
 #ImagingDetails['Images'] = ["0535-6600"]
 #ImagingDetails['Images'] = ["0535-7035"]
 #ImagingDetails['Images'] = ["0537-6916"]
 #ImagingDetails['Images'] = ["0539-6944"]
 #ImagingDetails['Images'] = ["0539-7001"]
-
+#ImagingDetails['Images'] = ["0547-6942"]
 #================= Invert =================
 
-ImagingDetails['Imsize'] = "9700"
+ImagingDetails['Imsize'] = "6000,6000"
 
 ImagingDetails['Offset'] = "05:17:14.64,-66:58:58.20"
 ImagingDetails['OffsetName'] = "05.17_-66.58"
@@ -96,7 +103,7 @@ ImagingDetails['PhaseSelfCalAmount'] = 0
 ImagingDetails['PhaseSelfCalOptions'] = "mfs,phase"
 
 ImagingDetails['PhaseSelfCalIterations'] = 5500
-ImagingDetails['PhaseSelfCalSigma'] = [15]
+ImagingDetails['PhaseSelfCalSigma'] = [20]
 
 ImagingDetails['PhaseSelfCalBin'] = 1
 ImagingDetails['PhaseSelfCalInterval'] = 0.1
@@ -107,7 +114,7 @@ ImagingDetails['AmplitudeSelfCalAmount'] = 0
 ImagingDetails['AmplitudeSelfCalOptions'] = "mfs,amp"
 
 ImagingDetails['AmplitudeSelfCalIterations'] = 5500
-ImagingDetails['AmplitudeSelfCalSigma'] = [5]
+ImagingDetails['AmplitudeSelfCalSigma'] = [15]
 
 ImagingDetails['AmplitudeSelfCalBin'] = 1
 ImagingDetails['AmplitudeSelfCalInterval'] = 0.1
@@ -161,8 +168,8 @@ def WriteLog(ImagingDetails,TotalTime):
 	logFile.write("<div>Robust: {0}</div>".format(ImagingDetails['Robust']))
 	logFile.write("<div>Frequency: {0}</div>".format(ImagingDetails['Frequency']))
 	logFile.write("<div>Stokes: {0}</div>".format(ImagingDetails['Stokes']))
-	logFile.write("<div>Antennas Used: {0}</div>".format(ImagingDetails['ActiveAntennasName']))
-	logFile.write("<div>Antennas Used: {0}</div>".format(ImagingDetails['ActiveAntennas']))
+	logFile.write("<div>Antennas Name: {0}</div>".format(ImagingDetails['ActiveAntennasName']))
+	logFile.write("<div>Select: {0}</div>".format(ImagingDetails['ActiveAntennas']))
 	logFile.write("<div>Invert Options: {0}</div>".format(ImagingDetails['InvertOptions']))
 
 	logFile.write("<div>&nbsp</div>")
@@ -195,7 +202,7 @@ def WriteLog(ImagingDetails,TotalTime):
 
 	logFile.write("<div>&nbsp</div>")
 	logFile.write("<div><b><span style=\"font-size: 16px;\">Linmos</span></b></div>")
-	logFile.write("<div>Options: {0}</div>".format(ImagingDetails['Bandwidth']))
+	logFile.write("<div>Bandwidth: {0}</div>".format(ImagingDetails['Bandwidth']))
 	
 	logFile.write("<div>&nbsp</div>")
 	logFile.write("<div><b><span style=\"font-size: 16px;\">Misc</span></b></div>")
@@ -382,10 +389,10 @@ def StandardCabbImaging(ImagingDetails):
 		#this loop copies the uv files and the region files from the source folder to the destination folder to perform the work.
 
 		#Copy Region File
-		RegionFile = str(ImageName) + "." + ImagingDetails['Frequency'] + "." + ImagingDetails['OffsetName'] + ".region"  
+		RegionFile = str(ImageName) + "." + ImagingDetails['Frequency'] + "." + ImagingDetails['OffsetName'] + ".region"  	
 
 		print "cp " + ImagingDetails['SourcePath'] + "/" + str(RegionFile) + " " + ImagingDetails['DestinationLink'] + "/" + str(RegionFile)
-		os.system("cp " + ImagingDetails['SourcePath'] + "/" + str(RegionFile) + " " + ImagingDetails['DestinationLink'] + "/" + str(RegionFile))
+		os.system("cp " + ImagingDetails['SourcePath'] + "/" + str(RegionFile) + " " + ImagingDetails['DestinationLink'] + "/" + str(RegionFile)) 
 
 		#perform the uvaver on the files
 		CheckProc(ImagingDetails['MaxProcesses'])
@@ -485,6 +492,8 @@ def StandardCabbImaging(ImagingDetails):
 #========================Finish Standard CABB Imaging =====================================
 
 
+#========================Make the symlinks and the detination path=========================
+
 if ReadFolder(ImagingDetails['DestinationPath']) == False:
 	os.system("mkdir " + ImagingDetails['DestinationPath'])
 
@@ -492,6 +501,11 @@ if ReadFolder(ImagingDetails['DestinationLink']) == False:
 	os.system("ln -s " + ImagingDetails['DestinationPath'] + "/ " + ImagingDetails['DestinationLink'])
 
 ImagingDetails['MaxProcesses'] -= 1
+
+#========================If all files are wanted from the source then it will build the image list================
+
+#if ImagingDetails['Images'] == "*":
+
 
 
 #using the arguments from the usercall, run a selection of imaging tasks.
