@@ -23,86 +23,55 @@ parser.add_argument('-s', '--Source', help = 'Skip calibration steps and only fl
 #parser.add_argument('-i', '--InteractiveFlag', help = 'Use BLFlag instead of PGFlag', action = "store_true")
 args = parser.parse_args()
 
-print args.Config 
-
 Config = ConfigParser.ConfigParser()
 Config.read(args.Config)
 
-#get the Imaging Details here. Replace this manual mess with a database call?
 CalibrationDetails = {}
 ProcList = []
 
-# #================= Misc =================
-# #Gaensler Day1
-# CalibrationDetails['MaxProcesses'] = 8
-# CalibrationDetails['ProjectNum'] = "C1395"
-# #CalibrationDetails['Frequencies'] = ["1384"]
-# CalibrationDetails['Frequencies'] = ["4800", "8640"]
-
-# CalibrationDetails['PrimaryCalibrators'] = ["1934-638"]
-# CalibrationDetails['SecondaryCalibrators'] = ["0515-674","0530-727"]
-
 #================= Misc =================
-#Gaensler Day2/Day3
+
 CalibrationDetails['MaxProcesses'] = Config.get("Misc", "MaxProcesses")
-CalibrationDetails['ProjectNum'] = "C1395"
-#CalibrationDetails['Frequencies'] = ["1384"]
-CalibrationDetails['Frequencies'] = ["1384", "1472"]
+CalibrationDetails['ProjectNum']   = Config.get("Misc", "ProjectNum")
+CalibrationDetails['Frequencies']  = Config.get("Misc", "Frequencies").split(",")
 
-CalibrationDetails['PrimaryCalibrators'] = ["1934-638"]
-CalibrationDetails['SecondaryCalibrators'] = ["0515-674"]
-
-# # #================= Misc =================
-# Marx Day1
-# CalibrationDetails['MaxProcesses'] = 8
-# CalibrationDetails['ProjectNum'] = "C138"
-# #CalibrationDetails['Frequencies'] = ["1376", "2378"]
-# CalibrationDetails['Frequencies'] = ["1376"]
-
-# CalibrationDetails['PrimaryCalibrators'] = ["1934-638"]
-# #CalibrationDetails['SecondaryCalibrators'] = ["0407-658", "0252-712"]
-# CalibrationDetails['SecondaryCalibrators'] = ["0407-658"]
+CalibrationDetails['PrimaryCalibrators']   = Config.get("Misc", "PrimaryCalibrators").split(",")
+CalibrationDetails['SecondaryCalibrators'] = Config.get("Misc", "SecondaryCalibrators").split(",")
 
 #================= Locations =================
 
-CalibrationDetails['RawPath'] = "Raw"
-CalibrationDetails['SourcePath'] = "Source"
-CalibrationDetails['CalibrationPath'] = "Calibrators"
-CalibrationDetails['TempPath'] = "Temp"
-CalibrationDetails['InitialFolder'] = os.getcwd()
+CalibrationDetails['RawPath']         = Config.get("Locations", "RawPath")
+CalibrationDetails['SourcePath']      = Config.get("Locations", "SourcePath")
+CalibrationDetails['CalibrationPath'] = Config.get("Locations", "CalibrationPath")
+CalibrationDetails['TempPath']        = Config.get("Locations", "TempPath")
+CalibrationDetails['InitialFolder']   = os.getcwd()
 
 #================= Atlod =================
 
-CalibrationDetails['Edge'] = ""
-CalibrationDetails['AtlodOptions'] = "birdie,noauto,rfiflag,xycorr"
+CalibrationDetails['Edge']         = Config.get("Atlod", "Edge")
+CalibrationDetails['AtlodOptions'] = Config.get("Atlod", "Options")
+
+#================= MFCal =================
+
+CalibrationDetails['MFCalReferenceAntenna'] = Config.get("MFCal", "ReferenceAntenna")
+CalibrationDetails['MFCalInterval'] 	    = Config.get("MFCal", "Interval")
 
 #================= GPCal =================
 
-CalibrationDetails['MFCalReferenceAntenna'] = "4"
-CalibrationDetails['MFCalInterval'] = "0.1"
-
-#================= GPCal =================
-
-CalibrationDetails['GPCalReferenceAntenna'] = "4"
-CalibrationDetails['GPCalInterval'] = "0.1"
-CalibrationDetails['PrimaryGPCalOptions'] = "xyvary"
-CalibrationDetails['SecondaryGPCalOptions'] = "xyvary,qusolve"
+CalibrationDetails['GPCalReferenceAntenna'] = Config.get("GPCal", "ReferenceAntenna")
+CalibrationDetails['GPCalInterval']         = Config.get("GPCal", "Interval")
+CalibrationDetails['PrimaryGPCalOptions']   = Config.get("GPCal", "PrimaryCalOptions")
+CalibrationDetails['SecondaryGPCalOptions'] = Config.get("GPCal", "SecondaryCalOptions")
 
 #================= PGFlag =================
 
-CalibrationDetails['PGFlagStokes'] = ["xy", "yx", "xx,yy", "yy,xx", "i", "q", "u", "v"]
-CalibrationDetails['PGFlagCommand'] = "<b<b"
-CalibrationDetails['PGFlagOptions'] = "nodisp"
+CalibrationDetails['PGFlagStokes']  = Config.get("PGFlag", "Stokes").split(".")
+CalibrationDetails['PGFlagCommand'] = Config.get("PGFlag", "Command")
+CalibrationDetails['PGFlagOptions'] = Config.get("PGFlag", "Options")
 
 #================= BLFlag =================
 
-CalibrationDetails['BLFlagStokes'] = ["xy", "yx", "xx,yy", "yy,xx", "i", "q", "u", "v"]
-
-
-
-
-
-
+CalibrationDetails['BLFlagStokes'] = Config.get("BLFlag", "Stokes").split(".")
 
 #Check to see if a particular item/folder exists within a particular folder. default folder to check is current one
 def ReadFolder(ItemToFind, Path=os.getcwd()):
