@@ -503,7 +503,7 @@ if args.ResetAll == True:
 
 	if LastChance == "Y" or LastChance == "y":
 		for Files in os.listdir(os.getcwd()):
-			if Files != "Raw" and Files.find(".def") == -1:
+			if Files != "Raw" and Files.find(".def") == -1 and Files.find(".ini") == -1:
 				os.system("rm -r " + Files)
 				print "rm -r " + Files
 
@@ -555,12 +555,15 @@ if args.FlagJunk == True or ReadFolder(CalibrationDetails['PrimaryCalibrators'][
 			else:
 				print "No flagging required"
 
+Implemented = False
+
 #using the arguments from the usercall, run a selection of imaging tasks.
 if args.Source == False:
 	if args.TaskSet == 1:
 		Cabb(CalibrationDetails);
 	elif args.TaskSet == 2:
 		PreCabb(CalibrationDetails);
+		Implemented = True
 
 	#copy calibration tables to all sources
 	GPCopy(CalibrationDetails)
@@ -575,22 +578,23 @@ CheckProc(0);
 #==============================================Source Flagging========================================================
 #=====================================================================================================================
 
-#make this better...
-for File in os.listdir(CalibrationDetails['SourcePath']):
-	StokesList = ["xy", "yx", "i", "q", "u", "v"]
-	#StokesList = ["xy", "yx"]
-	#StokesList = ["i", "q", "u", "v"]
+if Implemented == True:
+	#make this better...
+	for File in os.listdir(CalibrationDetails['SourcePath']):
+		StokesList = ["xy", "yx", "i", "q", "u", "v"]
+		#StokesList = ["xy", "yx"]
+		#StokesList = ["i", "q", "u", "v"]
 
-	for Stokes in StokesList:
-		Task = "blflag "
-		Task = Task + " vis='" + CalibrationDetails['SourcePath'] + "/" + File + "'"
-		Task = Task + " device='1/xs'"
-		Task = Task + " axis='chan,amp'"
-		Task = Task + " stokes='" + Stokes + "'"
-		Task = Task + " options='nob,nof'"
+		for Stokes in StokesList:
+			Task = "blflag "
+			Task = Task + " vis='" + CalibrationDetails['SourcePath'] + "/" + File + "'"
+			Task = Task + " device='1/xs'"
+			Task = Task + " axis='chan,amp'"
+			Task = Task + " stokes='" + Stokes + "'"
+			Task = Task + " options='nob,nof'"
 
-		print Task
-		os.system(Task) 
+			print Task
+			os.system(Task) 
 
 
 
