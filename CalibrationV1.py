@@ -13,7 +13,7 @@ startTime = datetime.now()
 
 #===================Set all arguments===============
 parser = argparse.ArgumentParser(description = 'CALIBRATE ALL OF THE THINGS!', formatter_class=RawTextHelpFormatter)
-parser.add_argument('-t', '--TaskSet', help = '1) Cabb Calibration \n2) Pre CABB Calibration ', type = int, default = 1, choices = [1,2])
+parser.add_argument('-t', '--TaskSet', help = '1) Cabb Calibration \n2) Pre CABB Calibration ', type = int, default = 2, choices = [1,2])
 parser.add_argument('-u', '--Unpack', help = 'Manually Fix up the primary calibrator observations before continuing with calibration. This option only performs atlod and uvsplit.', action = "store_true")
 parser.add_argument('-j', '--FlagJunk', help = 'Manually select a time to flag for junk primary calibrator observations. This is done initially before calibration and then ignored. This will force it to happen even with prior calibration', action = "store_true")
 parser.add_argument('-r', '--ResetAll', help = 'Reset back to a base state', action = "store_true")
@@ -565,8 +565,9 @@ if args.Source == False:
 		PreCabb(CalibrationDetails);
 		Implemented = True
 
-	#copy calibration tables to all sources
-	GPCopy(CalibrationDetails)
+	if Implemented == True:
+		#copy calibration tables to all sources
+		GPCopy(CalibrationDetails)
 
 if args.ResetSources == True:
 	CheckProc(0);
