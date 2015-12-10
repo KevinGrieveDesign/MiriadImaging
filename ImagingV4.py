@@ -1,8 +1,10 @@
 #!/usr/bin/python
 import os
 import subprocess
+import ConfigParser
 import time
 import argparse
+from argparse import RawTextHelpFormatter
 
 from subprocess import Popen
 from datetime import datetime
@@ -11,130 +13,92 @@ startTime = datetime.now()
 
 #===================Set all arguments===============
 parser = argparse.ArgumentParser(description='Image ALL OF THE THINGS!')
-parser.add_argument('-T' , '-t', '--TaskSet', help='1 For Standard CABB imaging pipeline')
+parser.add_argument('-T' , '-t', '--TaskSet', help='1 For Standard Imaging pipeline', type = int, default = 1, choices = [1])
+parser.add_argument('-c', '--Config', help = 'Location of the calibration file. Required, No Deault.', required=True)
 args = parser.parse_args()
 
-if args.TaskSet is not None:
-	TaskSet = int(args.TaskSet)
-else:
-	TaskSet = 1 
-
-#get the Imaging Details here. Replace this manual mess with a database call?
+Config = ConfigParser.ConfigParser()
+Config.read(args.Config)
 
 ImagingDetails = {}
 ProcList = []
 
 #================= Misc =================
 
-ImagingDetails['MaxProcesses'] = 6
-ImagingDetails['ProjectNum'] = "CX310-DAY6"
+ImagingDetails['MaxProcesses']  = int(Config.get("Misc", "MaxProcesses"))
+ImagingDetails['ProjectNum']    = Config.get("Misc", "ProjectNum")
+ImagingDetails['Type']          = Config.get("Misc", "Type")
+ImagingDetails['Frequency']     = Config.get("Misc", "Frequency")
 
-#ImagingDetails['ProjectNum'] = "0519-6902"
-#ImagingDetails['ProjectNum'] = "0525-6938"
-#ImagingDetails['ProjectNum'] = "0529-6653"
-#ImagingDetails['ProjectNum'] = "0533-6954"
-#ImagingDetails['ProjectNum'] = "0535-6600"
-#ImagingDetails['ProjectNum'] = "0535-7035"
-#ImagingDetails['ProjectNum'] = "0537-6916"
-#ImagingDetails['ProjectNum'] = "0539-6944"
-#ImagingDetails['ProjectNum'] = "0539-7001"
-#ImagingDetails['ProjectNum'] = "0547-6942"
-
-ImagingDetails['FWHM'] = "4.15,3.86"
-ImagingDetails['Cell'] = "0.8676114,0.8676114"
-ImagingDetails['PositionAngle'] = "-0.8"
+ImagingDetails['FWHM']          = Config.get("Misc", "FWHM")
+ImagingDetails['Cell']          = Config.get("Misc", "Cell")
+ImagingDetails['PositionAngle'] = Config.get("Misc", "PositionAngle")
 
 #================= Locations =================
 
-ImagingDetails['SourcePath'] = "Source"
-#ImagingDetails['SourcePath'] = "Source-1Phase"
-#ImagingDetails['SourcePath'] = "Source-2Phase"
-#ImagingDetails['SourcePath'] = "Source-1Phase-1Amp"
+ImagingDetails['SourcePath']      = Config.get("Locations", "SourcePath")
+ImagingDetails['DestinationPath'] = Config.get("Locations", "DestinationPath")
+ImagingDetails['Images']          = Config.get("Locations", "Images").split(",")
 
-#ImagingDetails['DestinationPath'] = "Done-1Phase-9700"
-ImagingDetails['DestinationPath'] = "Done-1Phase-6000"
+ImagingDetails['DestinationLink'] = Config.get("Locations", "DestinationLink")
 
-#ImagingDetails['DestinationPath'] = "0519-6902-Current/1Phase-8000"
-#ImagingDetails['DestinationPath'] = "0525-6938/1Phase-1Amp-6000"
-#ImagingDetails['DestinationPath'] = "0529-6653/1Phase-1Amp-6000"
-#ImagingDetails['DestinationPath'] = "0533-6954/1Phase-1Amp-9700"
-#ImagingDetails['DestinationPath'] = "0535-6600/1Phase-1Amp-6000"
-#ImagingDetails['DestinationPath'] = "0535-7035/1Phase-1Amp-6000-BetterClean"
-#ImagingDetails['DestinationPath'] = "0537-6916/1Phase-1Amp-6000"
-#ImagingDetails['DestinationPath'] = "0539-6944/1Phase-1Amp-6000"
-#ImagingDetails['DestinationPath'] = "0539-7001-Current/1Phase-6000"
-#ImagingDetails['DestinationPath'] = "0547-6942-Current/1Phase-6000"
-
-ImagingDetails['DestinationLink'] = "a"
-
-ImagingDetails['Images'] = ["0448-6659","0454-6712","0505-6754","0505-6808","0507-7024","0509-6730","0509-6840","0511-6709","0512-6716","0513-6731","0513-6740"]
-
-#ImagingDetails['Images'] = ["0519-6902","0525-6938","0529-6653","0533-6954","0535-6600","0535-7035","0537-6916","0539-6944","0539-7001","0547-6942"]
-#ImagingDetails['Images'] = ["0519-6902","0529-6653","0533-6954","0535-7035","0539-7001","0547-6942"]
-
-#ImagingDetails['Images'] = ["0519-6902"]
-#ImagingDetails['Images'] = ["0525-6938"]
-#ImagingDetails['Images'] = ["0529-6653"]
-#ImagingDetails['Images'] = ["0533-6954"]
-#ImagingDetails['Images'] = ["0535-6600"]
-#ImagingDetails['Images'] = ["0535-7035"]
-#ImagingDetails['Images'] = ["0537-6916"]
-#ImagingDetails['Images'] = ["0539-6944"]
-#ImagingDetails['Images'] = ["0539-7001"]
-#ImagingDetails['Images'] = ["0547-6942"]
 #================= Invert =================
 
-ImagingDetails['Imsize'] = "6000,6000"
+ImagingDetails['Imsize'] = Config.get("Invert", "Imsize")
+ImagingDetails['Robust'] = Config.get("Invert", "Robust")
+ImagingDetails['Stokes'] = Config.get("Invert", "Stokes")
 
-ImagingDetails['Offset'] = "05:17:14.64,-66:58:58.20"
-ImagingDetails['OffsetName'] = "05.17_-66.58"
+ImagingDetails['Offset']        = Config.get("Invert", "Offset")
+ImagingDetails['OffsetName']    = Config.get("Invert", "OffsetName")
+ImagingDetails['InvertOptions'] = Config.get("Invert", "InvertOptions")
 
-ImagingDetails['Robust'] = "0"
-ImagingDetails['Frequency'] = "2100"
-ImagingDetails['Stokes'] = "i"
-ImagingDetails['ActiveAntennasName'] = "123456"
-ImagingDetails['ActiveAntennas'] = ""
-ImagingDetails['InvertOptions'] = "double,mfs,sdb,mosaic"
+ImagingDetails['ActiveAntennasName'] = Config.get("Invert", "ActiveAntennasName")
+ImagingDetails['ActiveAntennas']     = Config.get("Invert", "ActiveAntennas")
 
 #================= Selfcal =================
 #===== Phase =====
+ 
+ImagingDetails['PhaseSelfCalAmount']  = int(Config.get("PhaseSelfCal", "Amount"))
+ImagingDetails['PhaseSelfCalOptions'] = Config.get("PhaseSelfCal", "Options")
 
-ImagingDetails['PhaseSelfCalAmount'] = 0
-ImagingDetails['PhaseSelfCalOptions'] = "mfs,phase"
+ImagingDetails['PhaseSelfCalIterations'] = Config.get("PhaseSelfCal", "Iterations")
+ImagingDetails['PhaseSelfCalSigma']      = Config.get("PhaseSelfCal", "Sigma").split(",")
 
-ImagingDetails['PhaseSelfCalIterations'] = 5500
-ImagingDetails['PhaseSelfCalSigma'] = [20]
-
-ImagingDetails['PhaseSelfCalBin'] = 1
-ImagingDetails['PhaseSelfCalInterval'] = 0.1
+ImagingDetails['PhaseSelfCalBin']      = Config.get("PhaseSelfCal", "Bin")
+ImagingDetails['PhaseSelfCalInterval'] = Config.get("PhaseSelfCal", "Interval")
 
 #=== Amplitude ===
 
-ImagingDetails['AmplitudeSelfCalAmount'] = 0
-ImagingDetails['AmplitudeSelfCalOptions'] = "mfs,amp"
+ImagingDetails['AmplitudeSelfCalAmount']  = int(Config.get("AmplitudeSelfCal", "Amount"))
+ImagingDetails['AmplitudeSelfCalOptions'] = Config.get("AmplitudeSelfCal", "Options")
 
-ImagingDetails['AmplitudeSelfCalIterations'] = 5500
-ImagingDetails['AmplitudeSelfCalSigma'] = [15]
+ImagingDetails['AmplitudeSelfCalIterations'] = Config.get("AmplitudeSelfCal", "Iterations")
+ImagingDetails['AmplitudeSelfCalSigma']      = Config.get("AmplitudeSelfCal", "Sigma").split(",")
 
-ImagingDetails['AmplitudeSelfCalBin'] = 1
-ImagingDetails['AmplitudeSelfCalInterval'] = 0.1
+ImagingDetails['AmplitudeSelfCalBin']      = Config.get("AmplitudeSelfCal", "Bin")
+ImagingDetails['AmplitudeSelfCalInterval'] = Config.get("AmplitudeSelfCal", "Interval")
 
 #================= MFClean =================
 
-ImagingDetails['Iterations'] = 10000
-ImagingDetails['Sigma'] = 5
-ImagingDetails['CleanRegion'] = "perc(66)"
+ImagingDetails['MFIterations']  = Config.get("MFClean", "Iterations")
+ImagingDetails['MFSigma']       = Config.get("MFClean", "Sigma")
+ImagingDetails['MFCleanRegion'] = Config.get("MFClean", "CleanRegion")
+
+#================= Clean =================
+
+ImagingDetails['Iterations']  = Config.get("Clean", "Iterations")
+ImagingDetails['Sigma']       = Config.get("Clean", "Sigma")
+ImagingDetails['CleanRegion'] = Config.get("Clean", "CleanRegion")
 
 #================= Restor =================
 
-ImagingDetails['RestorOptions'] = "mfs"
+ImagingDetails['RestorOptions'] = Config.get("Restor", "Options")
 
 #================= Linmos =================
 
-ImagingDetails['Bandwidth'] = 2.049
+ImagingDetails['Bandwidth'] = Config.get("Linmos", "Bandwidth")
 
 #================= End Reading Data =================
-
 
 def WriteLog(ImagingDetails,TotalTime):
 	logFile = open(ImagingDetails["DestinationLink"] + "/" + ImagingDetails["ProjectNum"] + "-ImagingLog.html", "a") 
@@ -159,6 +123,7 @@ def WriteLog(ImagingDetails,TotalTime):
 	logFile.write("<div>Project Number: {0}</div>".format(ImagingDetails['ProjectNum']))
 	logFile.write("<div>Source Folder: {0}</div>".format(ImagingDetails['SourcePath']))
 	logFile.write("<div>Destination Folder: {0}</div>".format(ImagingDetails['DestinationPath']))
+	logFile.write("<div>Type: {0}</div>".format(ImagingDetails['Type']))
 	logFile.write("<div>Images: {0}</div>".format(ImagingDetails['Images']))
 
 	logFile.write("<div>&nbsp</div>")
@@ -215,7 +180,6 @@ def WriteLog(ImagingDetails,TotalTime):
 	logFile.write("</html>")
 
 	logFile.close()
-
 
 #Check to see if a particular item/folder exists within a particular folder. default folder to check is current one
 def ReadFolder(ItemToFind, Path=os.getcwd()):
@@ -291,6 +255,46 @@ def MFClean(Image, ImagingDetails, SelfCal):
 			TheoreticalRMS = TheoreticalRMSArray[3]
 	
 	Task = "mfclean "
+	Task = Task + " map='" + Map + "'"
+	Task = Task + " beam='" + Beam + "'"
+	Task = Task + " out='" + Model + "'"
+	
+	#Set the stopping conditions 
+	if SelfCal == True:
+		Task = Task + " niters='" + str(ImagingDetails['SelfCalIterations']) + "'"
+		Task = Task + " cutoff='" + str(float(ImagingDetails['SelfCalSigma']) * float(TheoreticalRMS)) + "'"
+	else:
+		Task = Task + " niters='" + str(ImagingDetails['MFIterations']) + "'"
+		Task = Task + " cutoff='" + str(float(ImagingDetails['MFSigma']) * float(TheoreticalRMS)) + "'"
+
+	#Set the area to clean/selfcal on. 
+	if SelfCal == True and ReadFolder(RegionFile[RegionFile.find('/')+1:],ImagingDetails['DestinationLink']) == True:
+		Task = Task + " region='@" + str(RegionFile) + "'"
+	else:
+		Task = Task + " region='" + str(ImagingDetails['MFCleanRegion']) + "'" 
+
+	print Task
+	ProcList.append(Popen(Task, shell=True))				
+
+#run the task MFClean. This reads the invert log file and then gets the Theoretical RMS to then times by an amount (i.e 5 sigma) to se the clean cutoff level.
+def Clean(Image, ImagingDetails, SelfCal):
+	Map = str(Image) + ".map." + str(ImagingDetails['RoundNum'])
+	Beam = str(Image) + ".beam." + str(ImagingDetails['RoundNum'])
+	Model = str(Image) + ".model." + str(ImagingDetails['RoundNum'])
+	LogFile = str(Image) + ".invertlog." + str(ImagingDetails['RoundNum'])
+	RegionFile = str(Image) + "." + ImagingDetails['OffsetName'] + ".region"  #Destination/0001-0001.2100.05.17_-66.58.region
+	
+	TheoreticalRMS = ""
+	TheoreticalRMSArray = []
+
+	LogFileArray = open(LogFile)
+
+	for LogFileLine in LogFileArray:
+		if "Theoretical" in LogFileLine:
+			TheoreticalRMSArray = LogFileLine.split(" ")
+			TheoreticalRMS = TheoreticalRMSArray[3]
+	
+	Task = "clean "
 	Task = Task + " map='" + Map + "'"
 	Task = Task + " beam='" + Beam + "'"
 	Task = Task + " out='" + Model + "'"
@@ -377,10 +381,10 @@ def Linmos(ImagingDetails):
 	print Task
 	ProcList.append(Popen(Task, shell=True))
 
-#=====================================================================================================================
-#========Standard CABB Pipeline. UVaver, Invert, MFClean, SelfCal (optional - send to start. ), Restor, Linmos========
-#=====================================================================================================================
-def StandardCabbImaging(ImagingDetails):
+#===================================================================================================================================
+#========Standard Imaging Pipeline. UVaver, Invert, (MFClean or Clean), SelfCal (optional - send to start. ), Restor, Linmos========
+#===================================================================================================================================
+def StandardImaging(ImagingDetails):
 	ImagingDetails['RoundNum'] = 1
 
 	#===============Run UVaver to apply Calibrators and Copy the region File to the destination=================
@@ -439,7 +443,11 @@ def StandardCabbImaging(ImagingDetails):
 		for ImageName in ImagingDetails['Images']:
 			ImageName = ImagingDetails['DestinationLink'] + "/" + ImageName + "." + str(ImagingDetails['Frequency'])
 			CheckProc(ImagingDetails['MaxProcesses'])
-			MFClean(ImageName, ImagingDetails, True);
+
+			if ImagingDetails['Type'] == "PreCabb":
+				Clean(ImageName, ImagingDetails, True);
+			else:
+				MFClean(ImageName, ImagingDetails, True);
 		CheckProc(0)
 
 
@@ -476,7 +484,11 @@ def StandardCabbImaging(ImagingDetails):
 	for ImageName in ImagingDetails['Images']:
 		ImageName = ImagingDetails['DestinationLink'] + "/" + ImageName + "." + str(ImagingDetails['Frequency'])
 		CheckProc(ImagingDetails['MaxProcesses'])
-		MFClean(ImageName, ImagingDetails, False);
+		
+		if ImagingDetails['Type'] == "PreCabb":
+				Clean(ImageName, ImagingDetails, False);
+		else:
+			MFClean(ImageName, ImagingDetails, False);
 	CheckProc(0)
 
 	#===============Run Restor==================
@@ -509,8 +521,8 @@ ImagingDetails['MaxProcesses'] -= 1
 
 
 #using the arguments from the usercall, run a selection of imaging tasks.
-if TaskSet == 1:
-	StandardCabbImaging(ImagingDetails);
+if args.TaskSet == 1:
+	StandardImaging(ImagingDetails);
 
 CheckProc(0);
 
