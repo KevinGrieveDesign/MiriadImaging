@@ -15,6 +15,7 @@ startTime = datetime.now()
 parser = argparse.ArgumentParser(description='Image ALL OF THE THINGS!')
 parser.add_argument('-T' , '-t', '--TaskSet', help='1 For Standard Imaging pipeline', type = int, default = 1, choices = [1])
 parser.add_argument('-c', '--Config', help = 'Location of the calibration file. Required, No Deault.', required=True)
+parser.add_argument('-l', '--LinmosAll', help = 'A primary beam corrected image is created from each round of selfcal rather than one final image.', action = "store_true")
 args = parser.parse_args()
 
 Config = ConfigParser.ConfigParser()
@@ -371,10 +372,10 @@ def Linmos(ImagingDetails):
 	Linmos += ".Pha-" + str(ImagingDetails['PhaseSelfCalAmount'])
 	Linmos += ".Amp-" + str(ImagingDetails['AmplitudeSelfCalAmount'])
 	Linmos += "." + str(ImagingDetails['OffsetName'])
-	Linmos += ".pbcorr"
+	Linmos += ".pbcorr." + str(ImagingDetails['RoundNum']) 
 
 	Task = "linmos "
-	Task = Task + " in='" + ImagingDetails['DestinationLink'] + "/*restor*'"
+	Task = Task + " in='" + ImagingDetails['DestinationLink'] + "/*restor." + str(ImagingDetails['RoundNum']) + "'"
 	Task = Task + " out='" + Linmos + "'"
 	Task = Task + " bw='" + str(ImagingDetails['Bandwidth']) + "'"
 
@@ -438,7 +439,6 @@ def StandardImaging(ImagingDetails):
 			Invert(ImageName, ImagingDetails);
 		CheckProc(0)
 
-
 		#===============Run MFClean==================
 		for ImageName in ImagingDetails['Images']:
 			ImageName = ImagingDetails['DestinationLink'] + "/" + ImageName + "." + str(ImagingDetails['Frequency'])
@@ -450,6 +450,15 @@ def StandardImaging(ImagingDetails):
 				MFClean(ImageName, ImagingDetails, True);
 		CheckProc(0)
 
+		if args.LinmosAll == True:
+			for ImageName in ImagingDetails['Images']:
+				ImageName = ImagingDetails['DestinationLink'] + "/" + ImageName + "." + str(ImagingDetails['Frequency'])
+				CheckProc(ImagingDetails['MaxProcesses'])
+				Restor(ImageName, ImagingDetails);
+			CheckProc(0)
+
+			#===============Run Linmos==================
+			Linmos(ImagingDetails);
 
 		#===============Run SelfCal==================
 		for ImageName in ImagingDetails['Images']:
@@ -478,7 +487,6 @@ def StandardImaging(ImagingDetails):
 		CheckProc(ImagingDetails['MaxProcesses'])
 		Invert(ImageName, ImagingDetails);
 	CheckProc(0)
-
 
 	#===============Run MFClean==================
 	for ImageName in ImagingDetails['Images']:
