@@ -16,6 +16,7 @@ parser = argparse.ArgumentParser(description='Image ALL OF THE THINGS!')
 parser.add_argument('-T' , '-t', '--TaskSet', help='1 For Standard Imaging pipeline', type = int, default = 1, choices = [1])
 parser.add_argument('-c', '--Config', help = 'Location of the calibration file. Required, No Deault.', required=True)
 parser.add_argument('-l', '--LinmosAll', help = 'A primary beam corrected image is created from each round of selfcal rather than one final image.', action = "store_true")
+parser.add_argument('-l', '--Individual', help = 'A primary beam corrected image is created for each pointing rather than one for the whole field', action = "store_true")
 args = parser.parse_args()
 
 Config = ConfigParser.ConfigParser()
