@@ -363,7 +363,7 @@ def Restor(Image, ImagingDetails):
 	ProcList.append(Popen(Task, shell=True))
 
 #Run the task Linmos
-def Linmos(ImagingDetails):
+def Linmos(Image="", ImagingDetails):
 	Linmos = ImagingDetails['DestinationLink'] 
 	Linmos += "/"  + str(ImagingDetails['ProjectNum']) 
 	Linmos += ".R-" + str(ImagingDetails['Robust'])
@@ -375,7 +375,12 @@ def Linmos(ImagingDetails):
 	Linmos += ".pbcorr." + str(ImagingDetails['RoundNum']) 
 
 	Task = "linmos "
-	Task = Task + " in='" + ImagingDetails['DestinationLink'] + "/*restor." + str(ImagingDetails['RoundNum']) + "'"
+
+	if args.Individual == True:
+		Task = Task + " in='" + str(Image) + ".restor." + str(ImagingDetails['RoundNum']) + "'"
+	else:
+		Task = Task + " in='" + ImagingDetails['DestinationLink'] + "/*restor." + str(ImagingDetails['RoundNum']) + "'"
+
 	Task = Task + " out='" + Linmos + "'"
 	Task = Task + " bw='" + str(ImagingDetails['Bandwidth']) + "'"
 
@@ -458,7 +463,14 @@ def StandardImaging(ImagingDetails):
 			CheckProc(0)
 
 			#===============Run Linmos==================
-			Linmos(ImagingDetails);
+			if args.Individual == True
+				for ImageName in ImagingDetails['Images']:
+					ImageName = ImagingDetails['DestinationLink'] + "/" + ImageName + "." + str(ImagingDetails['Frequency'])
+					CheckProc(ImagingDetails['MaxProcesses'])
+					Restor(ImageName, ImagingDetails);
+				CheckProc(0)
+			else:
+				Linmos(ImagingDetails);
 
 		#===============Run SelfCal==================
 		for ImageName in ImagingDetails['Images']:
@@ -507,8 +519,15 @@ def StandardImaging(ImagingDetails):
 	CheckProc(0)
 
 	#===============Run Linmos==================
-	Linmos(ImagingDetails);
-
+	if args.Individual == True
+		for ImageName in ImagingDetails['Images']:
+			ImageName = ImagingDetails['DestinationLink'] + "/" + ImageName + "." + str(ImagingDetails['Frequency'])
+			CheckProc(ImagingDetails['MaxProcesses'])
+			Restor(ImageName, ImagingDetails);
+		CheckProc(0)
+	else:
+		Linmos(ImagingDetails);
+		
 #========================Finish Standard CABB Imaging =====================================
 
 
