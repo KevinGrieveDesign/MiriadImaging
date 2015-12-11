@@ -467,10 +467,10 @@ def StandardImaging(ImagingDetails):
 				for ImageName in ImagingDetails['Images']:
 					ImageName = ImagingDetails['DestinationLink'] + "/" + ImageName + "." + str(ImagingDetails['Frequency'])
 					CheckProc(ImagingDetails['MaxProcesses'])
-					Restor(ImageName, ImagingDetails);
+					Linmos(ImageName, ImagingDetails);
 				CheckProc(0)
 			else:
-				Linmos(ImagingDetails);
+				Linmos("", ImagingDetails);
 
 		#===============Run SelfCal==================
 		for ImageName in ImagingDetails['Images']:
@@ -523,11 +523,11 @@ def StandardImaging(ImagingDetails):
 		for ImageName in ImagingDetails['Images']:
 			ImageName = ImagingDetails['DestinationLink'] + "/" + ImageName + "." + str(ImagingDetails['Frequency'])
 			CheckProc(ImagingDetails['MaxProcesses'])
-			Restor(ImageName, ImagingDetails);
+			Linmos(ImageName, ImagingDetails);
 		CheckProc(0)
 	else:
-		Linmos(ImagingDetails);
-		
+		Linmos("", ImagingDetails);
+
 #========================Finish Standard CABB Imaging =====================================
 
 
