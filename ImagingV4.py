@@ -13,10 +13,10 @@ startTime = datetime.now()
 
 #===================Set all arguments===============
 parser = argparse.ArgumentParser(description='Image ALL OF THE THINGS!')
-parser.add_argument('-T' , '-t', '--TaskSet', help='1 For Standard Imaging pipeline', type = int, default = 1, choices = [1])
+parser.add_argument('-T' , '-t', '--TaskSet', help='1 For Standard Imaging pipeline. Default = 1', type = int, default = 1, choices = [1])
 parser.add_argument('-c', '--Config', help = 'Location of the calibration file. Required, No Deault.', required=True)
-parser.add_argument('-l', '--LinmosAll', help = 'A primary beam corrected image is created from each round of selfcal rather than one final image.', action = "store_true")
-parser.add_argument('-l', '--Individual', help = 'A primary beam corrected image is created for each pointing rather than one for the whole field', action = "store_true")
+parser.add_argument('-l', '--LinmosAll', help = 'A primary beam corrected image is created from each round of selfcal rather than one final image. Default = False', action = "store_true")
+parser.add_argument('-i', '--Individual', help = 'A primary beam corrected image is created for each pointing rather than one for the whole field. Default = False', action = "store_true")
 args = parser.parse_args()
 
 Config = ConfigParser.ConfigParser()
@@ -364,16 +364,19 @@ def Restor(Image, ImagingDetails):
 	ProcList.append(Popen(Task, shell=True))
 
 #Run the task Linmos
-def Linmos(Image="", ImagingDetails):
-	Linmos = ImagingDetails['DestinationLink'] 
-	Linmos += "/"  + str(ImagingDetails['ProjectNum']) 
-	Linmos += ".R-" + str(ImagingDetails['Robust'])
-	Linmos += ".S-" + str(ImagingDetails['Stokes'])
-	Linmos += "." + str(ImagingDetails['ActiveAntennasName'])
-	Linmos += ".Pha-" + str(ImagingDetails['PhaseSelfCalAmount'])
-	Linmos += ".Amp-" + str(ImagingDetails['AmplitudeSelfCalAmount'])
-	Linmos += "." + str(ImagingDetails['OffsetName'])
-	Linmos += ".pbcorr." + str(ImagingDetails['RoundNum']) 
+def Linmos(ImagingDetails, Image=""):
+	if args.Individual == True:
+		Linmos = ImagingDetails['DestinationLink'] 
+		Linmos += "/"  + str(ImagingDetails['ProjectNum']) 
+		Linmos += ".R-" + str(ImagingDetails['Robust'])
+		Linmos += ".S-" + str(ImagingDetails['Stokes'])
+		Linmos += "." + str(ImagingDetails['ActiveAntennasName'])
+		Linmos += ".Pha-" + str(ImagingDetails['PhaseSelfCalAmount'])
+		Linmos += ".Amp-" + str(ImagingDetails['AmplitudeSelfCalAmount'])
+		Linmos += "." + str(ImagingDetails['OffsetName'])
+		Linmos += ".pbcorr." + str(ImagingDetails['RoundNum']) 
+	else:
+		Linmos = "'" + str(Image) + ".pbcorr." + str(ImagingDetails['RoundNum']) + "'"
 
 	Task = "linmos "
 
@@ -464,14 +467,14 @@ def StandardImaging(ImagingDetails):
 			CheckProc(0)
 
 			#===============Run Linmos==================
-			if args.Individual == True
+			if args.Individual == True:
 				for ImageName in ImagingDetails['Images']:
 					ImageName = ImagingDetails['DestinationLink'] + "/" + ImageName + "." + str(ImagingDetails['Frequency'])
 					CheckProc(ImagingDetails['MaxProcesses'])
-					Linmos(ImageName, ImagingDetails);
+					Linmos(ImagingDetails, ImageName);
 				CheckProc(0)
 			else:
-				Linmos("", ImagingDetails);
+				Linmos(ImagingDetails);
 
 		#===============Run SelfCal==================
 		for ImageName in ImagingDetails['Images']:
@@ -520,14 +523,14 @@ def StandardImaging(ImagingDetails):
 	CheckProc(0)
 
 	#===============Run Linmos==================
-	if args.Individual == True
+	if args.Individual == True:
 		for ImageName in ImagingDetails['Images']:
 			ImageName = ImagingDetails['DestinationLink'] + "/" + ImageName + "." + str(ImagingDetails['Frequency'])
 			CheckProc(ImagingDetails['MaxProcesses'])
-			Linmos(ImageName, ImagingDetails);
+			Linmos(ImagingDetails, ImageName);
 		CheckProc(0)
 	else:
-		Linmos("", ImagingDetails);
+		Linmos(ImagingDetails);
 
 #========================Finish Standard CABB Imaging =====================================
 
