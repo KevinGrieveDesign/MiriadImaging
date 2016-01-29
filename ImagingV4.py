@@ -14,7 +14,6 @@ from astropy.coordinates import Angle
 
 from subprocess import Popen
 from datetime import datetime
-from progressbar import AnimatedMarker, Bar, BouncingBar, Counter, ETA, FileTransferSpeed, FormatLabel, Percentage, ProgressBar, ReverseBar, RotatingMarker, SimpleProgress, Timer  
 
 startTime = datetime.now()
 
@@ -532,6 +531,7 @@ def StandardImaging(ImagingDetails):
 				CheckProc(0)
 			else:
 				Linmos(ImagingDetails);
+				CheckProc(0)
 
 		#=============== Run SelfCal ==================
 		for ImageName in ImagingDetails['Images']:
@@ -588,6 +588,7 @@ def StandardImaging(ImagingDetails):
 		CheckProc(0)
 	else:
 		Linmos(ImagingDetails);
+		CheckProc(0)
 
 #======================== Finish Standard CABB Imaging =====================================
 
@@ -614,17 +615,10 @@ def SubBandImaging(ImagingDetails):
 	CatalogueHeader = fits.open(ImagingDetails['SourceCatalogue'])
 	Catalogue = CatalogueHeader[1].data
 
-	maxval = len(Catalogue)
-	widgets = ["Gathering Sources to Image:", Percentage(), ' (', Counter(), '/' + str(maxval) + ') ', Bar()]
-	pbar = ProgressBar(widgets = widgets, maxval = maxval, poll=0.1).start()
-
 	#TODO: currently recording the row nums of the source so i can log it later. todo: make logging happen
 	for RowNum in range(len(Catalogue)):
-		pbar.update(RowNum + 1)
 		if Catalogue[RowNum]['20cm Sigma'] > ImagingDetails['SubBandSourceStrength']:
 			ImagingDetails['SubBandSourceList'].append(RowNum)
-
-	pbar.finish()
 
 	print "Finding appropriate pointings and Starting Imaging"
 
@@ -709,8 +703,28 @@ def SubBandImaging(ImagingDetails):
 				print "Frequency: " + str(SubBandFrequency)
 				print "=============================================================="
 
+				#run imaging pipeline
 				ImagingDetails['Frequency'] = SubBandFrequency
 				StandardImaging(ImagingDetails)
+
+				#create input file for aegean
+				File = open(DestinationLink + "/SourcePosition.ascii",'w')
+				File.write(str(Catalogue[Source]['Best_Match_Ra_Degrees']) + " " + str(Catalogue[Source]['Best_Match_Dec_Degrees']) + "\n") 
+				File.close()
+
+				Task = "aegean "
+				Task = Task + " --measure "
+				Task = Task + " --input='" + DestinationLink + "/SourcePosition.ascii" + "'"
+				Task = Task + " --cores='" + ImagingDetails['MaxProcesses'] + "'"
+				Task = Task + " --out='" + DestinationLink + "/Catalogue-" + SubBandFrequency + ".fits'"
+
+				print Task
+				ProcList.append(Popen(Task, shell=True))
+
+				CheckProc(0)
+
+				
+
 			CheckProc(0)
 
 			os.system("rm " + ImagingDetails['DestinationLink'])
