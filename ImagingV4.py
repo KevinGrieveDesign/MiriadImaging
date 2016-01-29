@@ -2,21 +2,29 @@
 import os
 import subprocess
 import ConfigParser
+import threading
 import time
+
 import argparse
 from argparse import RawTextHelpFormatter
 
+from astropy.io import fits
+from astropy.coordinates import SkyCoord
+from astropy.coordinates import Angle
+
 from subprocess import Popen
 from datetime import datetime
+from progressbar import AnimatedMarker, Bar, BouncingBar, Counter, ETA, FileTransferSpeed, FormatLabel, Percentage, ProgressBar, ReverseBar, RotatingMarker, SimpleProgress, Timer  
 
 startTime = datetime.now()
 
-#===================Set all arguments===============
+#=================== Set all arguments ===============
 parser = argparse.ArgumentParser(description='Image ALL OF THE THINGS!')
-parser.add_argument('-T' , '-t', '--TaskSet', help='1 For Standard Imaging pipeline. Default = 1', type = int, default = 1, choices = [1])
+parser.add_argument('-T' , '-t', '--TaskSet', help='1 For Standard Imaging pipeline. 2 For SubBand Imaging. Default = 1', type = int, default = 1, choices = [1,2])
 parser.add_argument('-c', '--Config', help = 'Location of the calibration file. Required, No Deault.', required=True)
 parser.add_argument('-l', '--LinmosAll', help = 'A primary beam corrected image is created from each round of selfcal rather than one final image. Default = False', action = "store_true")
 parser.add_argument('-i', '--Individual', help = 'A primary beam corrected image is created for each pointing rather than one for the whole field. Default = False', action = "store_true")
+parser.add_argument('-r', '--Reset', help = 'Remove exisiting Files if they are present. Default = False', action = "store_true")
 args = parser.parse_args()
 
 Config = ConfigParser.ConfigParser()
@@ -39,11 +47,18 @@ ImagingDetails['PositionAngle'] = Config.get("Misc", "PositionAngle")
 #================= Locations =================
 
 ImagingDetails['SourcePath']      = Config.get("Locations", "SourcePath")
-ImagingDetails['DestinationPath'] = Config.get("Locations", "DestinationPath")
-ImagingDetails['Images']          = Config.get("Locations", "Images").split(",")
+ImagingDetails['SourceCatalogue'] = Config.get("Locations", "SourceCatalogue")
 
+ImagingDetails['DestinationPath'] = Config.get("Locations", "DestinationPath")
 ImagingDetails['DestinationLink'] = Config.get("Locations", "DestinationLink")
 
+ImagingDetails['Images']          = Config.get("Locations", "Images").split(",")
+
+#================= SubBands =================
+if args.TaskSet == 2:
+	ImagingDetails['SubBandSourceStrength'] = int(Config.get("SubBands", "SourceStrength"))
+	ImagingDetails['PrimaryBeam'] = Angle(Config.get("SubBands", "PrimaryBeam") + '\'').degree #arcmins
+	 
 #================= Invert =================
 
 ImagingDetails['Imsize'] = Config.get("Invert", "Imsize")
@@ -193,6 +208,17 @@ def ReadFolder(ItemToFind, Path=os.getcwd()):
 
 	return True;
 
+def remove_duplicates(values):
+    output = []
+    seen = set()
+    for value in values:
+        # If value has not been encountered yet,
+        # ... add it to both list and set.
+        if value not in seen:
+            output.append(value)
+            seen.add(value)
+    return output
+
 #Check to see how many processes are running at the same time, wait if max limit has been reached. 
 def CheckProc(MaxProcesses):
 	while len(ProcList) > MaxProcesses:
@@ -201,6 +227,37 @@ def CheckProc(MaxProcesses):
 		for Proc in ProcList:
 	 		if not(Proc.poll() is None):
 				ProcList.remove(Proc)
+
+#Read through all the source files that have been provided and find thier central location
+def GetPointingInformation(ImagingDetails):
+	print "Gathering Pointing Information"
+	PointingInformation = []
+	
+	for Pointing in ImagingDetails['Images']:
+		if ReadFolder(Pointing + "." + ImagingDetails['Frequency'], ImagingDetails['SourcePath']) == True:
+			LogFileName =  Pointing + "." + ImagingDetails['Frequency'] + ".header.log"
+
+			if ReadFolder(LogFileName, ImagingDetails['SourcePath']) == False:
+				os.system("prthd in=" + ImagingDetails['SourcePath'] + "/" + Pointing + "." + ImagingDetails['Frequency'] + " > " + ImagingDetails['SourcePath'] + "/" + LogFileName)
+
+			LogFileArray = open(ImagingDetails['SourcePath'] + "/" + LogFileName)
+
+			for LogFileLine in LogFileArray:
+				if "Pointing Centre" in LogFileLine:
+					PointingInformation = LogFileLine.split(" ")					
+
+					ImagingDetails['ImageRa'].append(PointingInformation[3])
+					ImagingDetails['ImageDEC'].append(PointingInformation[6].replace("\n",""))
+
+def ConvertCoord(Coordinate, Type):
+	if Type == "Ra":
+		Coordinate = Coordinate.replace(":", "h", 1)
+	elif Type == "Dec":
+		Coordinate = Coordinate.replace(":", "d", 1)
+
+	Coordinate = Coordinate.replace(":", "m", 1)
+	Coordinate = Coordinate + "s"
+	return Coordinate
 
 #run the task UVaver
 def UVaver(Image, ImagingDetails):
@@ -244,7 +301,7 @@ def MFClean(Image, ImagingDetails, SelfCal):
 	Beam = str(Image) + ".beam." + str(ImagingDetails['RoundNum'])
 	Model = str(Image) + ".model." + str(ImagingDetails['RoundNum'])
 	LogFile = str(Image) + ".invertlog." + str(ImagingDetails['RoundNum'])
-	RegionFile = str(Image) + "." + ImagingDetails['OffsetName'] + ".region"  #Destination/0001-0001.2100.05.17_-66.58.region
+	RegionFile = str(Image) + "." + ImagingDetails['OffsetName'] + ".region"  #eg: Destination/0001-0001.2100.05.17_-66.58.region
 	
 	TheoreticalRMS = ""
 	TheoreticalRMSArray = []
@@ -366,6 +423,8 @@ def Restor(Image, ImagingDetails):
 #Run the task Linmos
 def Linmos(ImagingDetails, Image=""):
 	if args.Individual == True:
+		Linmos = "'" + str(Image) + ".pbcorr." + str(ImagingDetails['RoundNum']) + "'"
+	else:
 		Linmos = ImagingDetails['DestinationLink'] 
 		Linmos += "/"  + str(ImagingDetails['ProjectNum']) 
 		Linmos += ".R-" + str(ImagingDetails['Robust'])
@@ -373,17 +432,15 @@ def Linmos(ImagingDetails, Image=""):
 		Linmos += "." + str(ImagingDetails['ActiveAntennasName'])
 		Linmos += ".Pha-" + str(ImagingDetails['PhaseSelfCalAmount'])
 		Linmos += ".Amp-" + str(ImagingDetails['AmplitudeSelfCalAmount'])
-		Linmos += "." + str(ImagingDetails['OffsetName'])
+		Linmos += "." + str(ImagingDetails['Frequency'])
 		Linmos += ".pbcorr." + str(ImagingDetails['RoundNum']) 
-	else:
-		Linmos = "'" + str(Image) + ".pbcorr." + str(ImagingDetails['RoundNum']) + "'"
-
+	
 	Task = "linmos "
 
 	if args.Individual == True:
 		Task = Task + " in='" + str(Image) + ".restor." + str(ImagingDetails['RoundNum']) + "'"
 	else:
-		Task = Task + " in='" + ImagingDetails['DestinationLink'] + "/*restor." + str(ImagingDetails['RoundNum']) + "'"
+		Task = Task + " in='" + ImagingDetails['DestinationLink'] + "/*" + str(ImagingDetails['Frequency']) + "*restor." + str(ImagingDetails['RoundNum']) + "'"
 
 	Task = Task + " out='" + Linmos + "'"
 	Task = Task + " bw='" + str(ImagingDetails['Bandwidth']) + "'"
@@ -391,13 +448,13 @@ def Linmos(ImagingDetails, Image=""):
 	print Task
 	ProcList.append(Popen(Task, shell=True))
 
-#===================================================================================================================================
-#========Standard Imaging Pipeline. UVaver, Invert, (MFClean or Clean), SelfCal (optional - send to start. ), Restor, Linmos========
-#===================================================================================================================================
+#=====================================================================================================================================
+#======== Standard Imaging Pipeline. UVaver, Invert, (MFClean or Clean), SelfCal (optional - send to start. ), Restor, Linmos ========
+#=====================================================================================================================================
 def StandardImaging(ImagingDetails):
 	ImagingDetails['RoundNum'] = 1
 
-	#===============Run UVaver to apply Calibrators and Copy the region File to the destination=================
+	#=============== Run UVaver to apply Calibrators and Copy the region File to the destination =================
 
 	for ImageName in ImagingDetails['Images']:
 		#this loop copies the uv files and the region files from the source folder to the destination folder to perform the work.
@@ -441,14 +498,14 @@ def StandardImaging(ImagingDetails):
 			ImagingDetails['SelfCalInterval'] = ImagingDetails['AmplitudeSelfCalInterval']
 
 
-		#===============Run Invert==================
+		#=============== Run Invert ==================
 		for ImageName in ImagingDetails['Images']:
 			ImageName = ImagingDetails['DestinationLink'] + "/" + ImageName + "." + str(ImagingDetails['Frequency'])
 			CheckProc(ImagingDetails['MaxProcesses'])
 			Invert(ImageName, ImagingDetails);
 		CheckProc(0)
 
-		#===============Run MFClean==================
+		#=============== Run MFClean ==================
 		for ImageName in ImagingDetails['Images']:
 			ImageName = ImagingDetails['DestinationLink'] + "/" + ImageName + "." + str(ImagingDetails['Frequency'])
 			CheckProc(ImagingDetails['MaxProcesses'])
@@ -466,7 +523,7 @@ def StandardImaging(ImagingDetails):
 				Restor(ImageName, ImagingDetails);
 			CheckProc(0)
 
-			#===============Run Linmos==================
+			#=============== Run Linmos ==================
 			if args.Individual == True:
 				for ImageName in ImagingDetails['Images']:
 					ImageName = ImagingDetails['DestinationLink'] + "/" + ImageName + "." + str(ImagingDetails['Frequency'])
@@ -476,14 +533,14 @@ def StandardImaging(ImagingDetails):
 			else:
 				Linmos(ImagingDetails);
 
-		#===============Run SelfCal==================
+		#=============== Run SelfCal ==================
 		for ImageName in ImagingDetails['Images']:
 			ImageName = ImagingDetails['DestinationLink'] + "/" + ImageName + "." + str(ImagingDetails['Frequency'])
 			CheckProc(ImagingDetails['MaxProcesses'])
 			SelfCal(ImageName, ImagingDetails);
 		CheckProc(0)
 
-		#===============Run UVaver to apply SelfCal==================
+		#=============== Run UVaver to apply SelfCal ==================
 		for ImageName in ImagingDetails['Images']:
 			ImageName = ImagingDetails['DestinationLink'] + "/" + ImageName + "." + str(ImagingDetails['Frequency'])
 			CheckProc(ImagingDetails['MaxProcesses'])
@@ -491,20 +548,20 @@ def StandardImaging(ImagingDetails):
 		CheckProc(0)
 
 	#======================================================================================
-	#============================Start the Final Imaging===================================
+	#=========================== Start the Final Imaging ==================================
 	#======================================================================================
 
 	if ImagingDetails['SelfCalAmount'] >= 1:
 		ImagingDetails['RoundNum'] += 1
 
-	#===============Run Invert==================
+	#=============== Run Invert ==================
 	for ImageName in ImagingDetails['Images']:
 		ImageName = ImagingDetails['DestinationLink'] + "/" + ImageName + "." + str(ImagingDetails['Frequency'])
 		CheckProc(ImagingDetails['MaxProcesses'])
 		Invert(ImageName, ImagingDetails);
 	CheckProc(0)
 
-	#===============Run MFClean==================
+	#=============== Run MFClean ==================
 	for ImageName in ImagingDetails['Images']:
 		ImageName = ImagingDetails['DestinationLink'] + "/" + ImageName + "." + str(ImagingDetails['Frequency'])
 		CheckProc(ImagingDetails['MaxProcesses'])
@@ -515,14 +572,14 @@ def StandardImaging(ImagingDetails):
 			MFClean(ImageName, ImagingDetails, False);
 	CheckProc(0)
 
-	#===============Run Restor==================
+	#=============== Run Restor ==================
 	for ImageName in ImagingDetails['Images']:
 		ImageName = ImagingDetails['DestinationLink'] + "/" + ImageName + "." + str(ImagingDetails['Frequency'])
 		CheckProc(ImagingDetails['MaxProcesses'])
 		Restor(ImageName, ImagingDetails);
 	CheckProc(0)
 
-	#===============Run Linmos==================
+	#=============== Run Linmos ==================
 	if args.Individual == True:
 		for ImageName in ImagingDetails['Images']:
 			ImageName = ImagingDetails['DestinationLink'] + "/" + ImageName + "." + str(ImagingDetails['Frequency'])
@@ -532,54 +589,172 @@ def StandardImaging(ImagingDetails):
 	else:
 		Linmos(ImagingDetails);
 
-#========================Finish Standard CABB Imaging =====================================
+#======================== Finish Standard CABB Imaging =====================================
 
 
-#========================Make the symlinks and the detination path=========================
+#===================================================================================================================================
+#======== SubBand Imaging Pipeline. Pointing Selection, Calculate RMS and Signal-to-Noise, Then use Standard CABB Imaging ==========
+#===================================================================================================================================
+def SubBandImaging(ImagingDetails):
+	ImagingDetails['ImageRa']    = []
+	ImagingDetails['ImageDEC']   = []
+	ImagingDetails['SubBandSourceList'] = []
+
+	GetPointingInformation(ImagingDetails)
+
+	ImagingDetails['OrigDestinationPath'] = ImagingDetails['DestinationPath']
+	ImagingDetails['OrigImages'] = ImagingDetails['Images']
+	ImagingDetails['OrigFrequency'] = ImagingDetails['Frequency']
+	ImagingDetails['OrigSourcePath'] = ImagingDetails['SourcePath']
+	
+	os.system("rm " + ImagingDetails['DestinationLink'])
+
+	#get the strong sources from the provided Catalogue
+	#TODO: make the column names dynamic
+	CatalogueHeader = fits.open(ImagingDetails['SourceCatalogue'])
+	Catalogue = CatalogueHeader[1].data
+
+	maxval = len(Catalogue)
+	widgets = ["Gathering Sources to Image:", Percentage(), ' (', Counter(), '/' + str(maxval) + ') ', Bar()]
+	pbar = ProgressBar(widgets = widgets, maxval = maxval, poll=0.1).start()
+
+	#TODO: currently recording the row nums of the source so i can log it later. todo: make logging happen
+	for RowNum in range(len(Catalogue)):
+		pbar.update(RowNum + 1)
+		if Catalogue[RowNum]['20cm Sigma'] > ImagingDetails['SubBandSourceStrength']:
+			ImagingDetails['SubBandSourceList'].append(RowNum)
+
+	pbar.finish()
+
+	print "Finding appropriate pointings and Starting Imaging"
+
+	#loop through all sources 
+	for SourceNum, Source in enumerate(ImagingDetails['SubBandSourceList']):
+		ImagingDetails['Images'] = []
+		SubBandFrequencies = []
+		StartingDir = os.getcwd()
+
+		SubBandWidth = 1024
+
+		if Catalogue[SourceNum]['20cm Sigma'] > 20:
+			SubBandWidth = 512
+		elif Catalogue[SourceNum]['20cm Sigma'] > 40:
+			SubBandWidth = 256
+
+		#loop through all pointings and figure out if any pointing contribute to the source
+		for ImageNum, Image in enumerate(ImagingDetails['OrigImages']):
+			if ReadFolder(Image + "." + ImagingDetails['Frequency'], ImagingDetails['SourcePath']) == True:
+				ImageCoordinates = SkyCoord (ConvertCoord(ImagingDetails['ImageRa'][ImageNum], "Ra"), ConvertCoord(ImagingDetails['ImageDEC'][ImageNum], "Dec"), frame = 'fk5')
+				SourceCoordinates = SkyCoord (ConvertCoord(Catalogue[Source]['Best Match Ra'], "Ra"), ConvertCoord(Catalogue[Source]['Best Match Dec'], "Dec"), frame = 'fk5')
+				
+				Sep = ImageCoordinates.separation(SourceCoordinates)
+				Sep = Angle(Sep).degree
+
+				if ImagingDetails['PrimaryBeam'] > Sep: 
+					ImagingDetails['Images'].append(Image)
+
+		#if we find some pointings, then image it
+		if len(ImagingDetails['Images']) > 0:
+			print "=============================================================="
+			print "Source: " + str(Catalogue[Source]['Name'])
+			print "=============================================================="
+
+			ImagingDetails['DestinationPath'] = ImagingDetails['OrigDestinationPath'] + "/" + Catalogue[Source]['Name']
+			ImagingDetails['SourcePath'] = ImagingDetails['DestinationPath'] + "/Source" 
+			ImagingDetails['ProjectNum'] = Catalogue[Source]['Name']
+
+			#create a folder for each source and a 'Source' folder inside containing the uv files
+			if ReadFolder(ImagingDetails['DestinationPath']) == False:
+				os.system("mkdir " + ImagingDetails['DestinationPath'])
+
+			if ReadFolder(ImagingDetails['DestinationLink']) == False:
+				os.system("ln -s " + ImagingDetails['DestinationPath'] + "/ " + ImagingDetails['DestinationLink'])
+
+			if ReadFolder(ImagingDetails['SourcePath'], ImagingDetails['DestinationPath']) == False:
+				os.system("mkdir " + ImagingDetails['SourcePath'])
+
+			for Image in ImagingDetails['Images']:
+				os.system("cp -r " + ImagingDetails['OrigSourcePath'] + "/" + Image + "." + ImagingDetails['OrigFrequency'] + " " + ImagingDetails['SourcePath']  )
+
+			os.chdir(ImagingDetails['SourcePath'])
+
+			#split the pointings up into the SubBands
+			for Image in ImagingDetails['Images']:
+				CheckProc(ImagingDetails['MaxProcesses'])
+				
+				Task = "uvsplit "
+				Task = Task + " vis='" + str(Image) + "." + ImagingDetails['OrigFrequency'] + "'"
+				Task = Task + " maxwidth='" + str(float(SubBandWidth)/1000) + "'"
+
+				print Task
+				ProcList.append(Popen(Task, shell=True))
+
+			CheckProc(0)
+
+			#small cleanup of full bandwidth file
+			for Image in ImagingDetails['Images']:
+				os.system("rm -r '" + str(Image) + "." + ImagingDetails['OrigFrequency'] + "'")
+
+			#gather new central frequencies
+			for Files in os.listdir(os.getcwd()):
+				TempFreq = Files.split(".")
+				SubBandFrequencies.append(TempFreq[1])
+
+			SubBandFrequencies = remove_duplicates(SubBandFrequencies)
+			os.chdir(StartingDir)
+
+			#Loop through the subband frequencies and start the imaging
+			for SubBandFrequency in SubBandFrequencies:
+				print "=============================================================="
+				print "Frequency: " + str(SubBandFrequency)
+				print "=============================================================="
+
+				ImagingDetails['Frequency'] = SubBandFrequency
+				StandardImaging(ImagingDetails)
+			CheckProc(0)
+
+			os.system("rm " + ImagingDetails['DestinationLink'])
+
+	CatalogueHeader.close()
+
+#======================== Finish SubBand CABB Imaging =====================================
+
+
+#======================== Make the symlinks and the detination path =========================
+
+if args.Reset == True:
+	if len(ImagingDetails['DestinationPath']) > 2:
+		os.system("rm -r " + ImagingDetails['DestinationPath'])
+		os.system("rm " + ImagingDetails['DestinationLink'])
 
 if ReadFolder(ImagingDetails['DestinationPath']) == False:
 	os.system("mkdir " + ImagingDetails['DestinationPath'])
 
-if ReadFolder(ImagingDetails['DestinationLink']) == False:
-	os.system("ln -s " + ImagingDetails['DestinationPath'] + "/ " + ImagingDetails['DestinationLink'])
+	if ReadFolder(ImagingDetails['DestinationLink']) == False:
+		os.system("ln -s " + ImagingDetails['DestinationPath'] + "/ " + ImagingDetails['DestinationLink'])
 
-ImagingDetails['MaxProcesses'] -= 1
+	ImagingDetails['MaxProcesses'] -= 1
 
-#========================If all files are wanted from the source then it will build the image list================
+	#TODO: If all files are wanted from the source then it will build the image list ================
 
-#if ImagingDetails['Images'] == "*":
+	#if ImagingDetails['Images'] == "*":
 
+	#using the arguments from the usercall, run a selection of imaging tasks.
+	if args.TaskSet == 1:
+		StandardImaging(ImagingDetails);
+	elif args.TaskSet == 2:
+		SubBandImaging(ImagingDetails);
 
+	CheckProc(0);
 
-#using the arguments from the usercall, run a selection of imaging tasks.
-if args.TaskSet == 1:
-	StandardImaging(ImagingDetails);
+	#Write the Log file in a html format to import into Evernote 
+	#WriteLog(ImagingDetails,str(datetime.now()-startTime))
+	os.system("rm " + ImagingDetails['DestinationLink'])
 
-CheckProc(0);
-
-#Write the Log file in a html format to import into Evernote 
-WriteLog(ImagingDetails,str(datetime.now()-startTime))
-os.system("rm " + ImagingDetails['DestinationLink'])
-
-print(      "\n\n\n\n+=========================Finished=========================+\n"       )
-print("|        Time Taken    = " + str(datetime.now()) + "        |")
-print("|        Time Finished = " + str(datetime.now()-startTime) + "                    |")
-print(            "\n+==========================================================+\n"       )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	print(      "\n\n\n\n+=========================Finished=========================+\n"       )
+	print("|        Time Taken    = " + str(datetime.now()) + "        |")
+	print("|        Time Finished = " + str(datetime.now()-startTime) + "                    |")
+	print(            "\n+==========================================================+\n"       )
+else:
+	print "Existing Data Found. Quitting. Please use -r to remove the data or rename your destination folder"
 
