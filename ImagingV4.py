@@ -1,16 +1,19 @@
-#!/usr/bin/python
+#!/usr/bin/python2.7
 import os
 import subprocess
 import ConfigParser
 import threading
+import sys
 import time
 
+import numpy as np
 import argparse
 from argparse import RawTextHelpFormatter
 
 from astropy.io import fits
 from astropy.coordinates import SkyCoord
 from astropy.coordinates import Angle
+from astropy.io.fits import getdata
 
 from subprocess import Popen
 from datetime import datetime
@@ -46,18 +49,42 @@ ImagingDetails['PositionAngle'] = Config.get("Misc", "PositionAngle")
 #================= Locations =================
 
 ImagingDetails['SourcePath']      = Config.get("Locations", "SourcePath")
-ImagingDetails['SourceCatalogue'] = Config.get("Locations", "SourceCatalogue")
-
 ImagingDetails['DestinationPath'] = Config.get("Locations", "DestinationPath")
 ImagingDetails['DestinationLink'] = Config.get("Locations", "DestinationLink")
 
 ImagingDetails['Images']          = Config.get("Locations", "Images").split(",")
 
 #================= SubBands =================
+
 if args.TaskSet == 2:
 	ImagingDetails['SubBandSourceStrength'] = int(Config.get("SubBands", "SourceStrength"))
 	ImagingDetails['PrimaryBeam'] = Angle(Config.get("SubBands", "PrimaryBeam") + '\'').degree #arcmins
-	 
+	ImagingDetails['MinPointings'] = int(Config.get("SubBands", "MinPointings"))
+
+	#================= Catalogue Column Details =================
+	ImagingDetails['SourceCatalogue'] = Config.get("CatalogueDetails", "SourceCatalogue")
+
+	ImagingDetails['ColSourceName']    = Config.get("CatalogueDetails", "SourceName")
+	ImagingDetails['ColRA']            = Config.get("CatalogueDetails", "RA")
+	ImagingDetails['ColDEC']           = Config.get("CatalogueDetails", "DEC")
+	ImagingDetails['ColRADegrees']     = Config.get("CatalogueDetails", "RA_Degrees")
+	ImagingDetails['ColRADegreesErr']  = Config.get("CatalogueDetails", "RA_Degrees_Err")
+	ImagingDetails['ColDECDegrees']    = Config.get("CatalogueDetails", "DEC_Degrees")
+	ImagingDetails['ColDECDegreesErr'] = Config.get("CatalogueDetails", "DEC_Degrees_Err")
+
+	ImagingDetails['ColIntegFlux']    = Config.get("CatalogueDetails", "IntegFlux")
+	ImagingDetails['ColSigma']        = Config.get("CatalogueDetails", "Sigma")
+	ImagingDetails['ColIntegFluxErr'] = Config.get("CatalogueDetails", "IntegFlux_Err")
+	ImagingDetails['ColPeakFlux']     = Config.get("CatalogueDetails", "PeakFlux")
+	ImagingDetails['ColPeakFluxErr']  = Config.get("CatalogueDetails", "PeakFlux_Err")
+
+	ImagingDetails['ColPA']       = Config.get("CatalogueDetails", "PA")
+	ImagingDetails['ColPAErr']    = Config.get("CatalogueDetails", "PA_Err")
+	ImagingDetails['ColMajor']    = Config.get("CatalogueDetails", "Major")
+	ImagingDetails['ColMajorErr'] = Config.get("CatalogueDetails", "Major_Err")
+	ImagingDetails['ColMinor']    = Config.get("CatalogueDetails", "Minor")
+	ImagingDetails['ColMinorErr'] = Config.get("CatalogueDetails", "Minor_Err")	
+
 #================= Invert =================
 
 ImagingDetails['Imsize'] = Config.get("Invert", "Imsize")
@@ -461,8 +488,9 @@ def StandardImaging(ImagingDetails):
 		#Copy Region File
 		RegionFile = str(ImageName) + "." + ImagingDetails['Frequency'] + "." + ImagingDetails['OffsetName'] + ".region"  	
 
-		print "cp " + ImagingDetails['SourcePath'] + "/" + str(RegionFile) + " " + ImagingDetails['DestinationLink'] + "/" + str(RegionFile)
-		os.system("cp " + ImagingDetails['SourcePath'] + "/" + str(RegionFile) + " " + ImagingDetails['DestinationLink'] + "/" + str(RegionFile)) 
+		if ReadFolder(RegionFile, ImagingDetails['SourcePath']) == True:
+			print "cp " + ImagingDetails['SourcePath'] + "/" + str(RegionFile) + " " + ImagingDetails['DestinationLink'] + "/" + str(RegionFile)
+			os.system("cp " + ImagingDetails['SourcePath'] + "/" + str(RegionFile) + " " + ImagingDetails['DestinationLink'] + "/" + str(RegionFile)) 
 
 		#perform the uvaver on the files
 		CheckProc(ImagingDetails['MaxProcesses'])
@@ -597,6 +625,7 @@ def StandardImaging(ImagingDetails):
 #======== SubBand Imaging Pipeline. Pointing Selection, Calculate RMS and Signal-to-Noise, Then use Standard CABB Imaging ==========
 #===================================================================================================================================
 def SubBandImaging(ImagingDetails):
+	#reset some values so that we are able to perform the subband imaging
 	ImagingDetails['ImageRa']    = []
 	ImagingDetails['ImageDEC']   = []
 	ImagingDetails['SubBandSourceList'] = []
@@ -608,16 +637,16 @@ def SubBandImaging(ImagingDetails):
 	ImagingDetails['OrigFrequency'] = ImagingDetails['Frequency']
 	ImagingDetails['OrigSourcePath'] = ImagingDetails['SourcePath']
 	
-	os.system("rm " + ImagingDetails['DestinationLink'])
+	if ReadFolder(ImagingDetails['DestinationLink']):
+		os.system("rm " + ImagingDetails['DestinationLink'])
 
 	#get the strong sources from the provided Catalogue
-	#TODO: make the column names dynamic
 	CatalogueHeader = fits.open(ImagingDetails['SourceCatalogue'])
 	Catalogue = CatalogueHeader[1].data
 
 	#TODO: currently recording the row nums of the source so i can log it later. todo: make logging happen
 	for RowNum in range(len(Catalogue)):
-		if Catalogue[RowNum]['20cm Sigma'] > ImagingDetails['SubBandSourceStrength']:
+		if Catalogue[RowNum][ImagingDetails['ColSigma']] > ImagingDetails['SubBandSourceStrength']:
 			ImagingDetails['SubBandSourceList'].append(RowNum)
 
 	print "Finding appropriate pointings and Starting Imaging"
@@ -630,16 +659,16 @@ def SubBandImaging(ImagingDetails):
 
 		SubBandWidth = 1024
 
-		if Catalogue[SourceNum]['20cm Sigma'] > 20:
+		if Catalogue[SourceNum][ImagingDetails['ColSigma']] > 20:
 			SubBandWidth = 512
-		elif Catalogue[SourceNum]['20cm Sigma'] > 40:
+		elif Catalogue[SourceNum][ImagingDetails['ColSigma']] > 40:
 			SubBandWidth = 256
 
 		#loop through all pointings and figure out if any pointing contribute to the source
 		for ImageNum, Image in enumerate(ImagingDetails['OrigImages']):
 			if ReadFolder(Image + "." + ImagingDetails['Frequency'], ImagingDetails['SourcePath']) == True:
 				ImageCoordinates = SkyCoord (ConvertCoord(ImagingDetails['ImageRa'][ImageNum], "Ra"), ConvertCoord(ImagingDetails['ImageDEC'][ImageNum], "Dec"), frame = 'fk5')
-				SourceCoordinates = SkyCoord (ConvertCoord(Catalogue[Source]['Best Match Ra'], "Ra"), ConvertCoord(Catalogue[Source]['Best Match Dec'], "Dec"), frame = 'fk5')
+				SourceCoordinates = SkyCoord (ConvertCoord(Catalogue[Source][ImagingDetails['ColRA']], "Ra"), ConvertCoord(Catalogue[Source][ImagingDetails['ColDEC']], "Dec"), frame = 'fk5')
 				
 				Sep = ImageCoordinates.separation(SourceCoordinates)
 				Sep = Angle(Sep).degree
@@ -648,14 +677,14 @@ def SubBandImaging(ImagingDetails):
 					ImagingDetails['Images'].append(Image)
 
 		#if we find some pointings, then image it
-		if len(ImagingDetails['Images']) > 0:
+		if len(ImagingDetails['Images']) > ImagingDetails['MinPointings']:
 			print "=============================================================="
-			print "Source: " + str(Catalogue[Source]['Name'])
+			print "Source: " + str(Catalogue[Source][ImagingDetails['ColSourceName']])
 			print "=============================================================="
 
-			ImagingDetails['DestinationPath'] = ImagingDetails['OrigDestinationPath'] + "/" + Catalogue[Source]['Name']
+			ImagingDetails['DestinationPath'] = ImagingDetails['OrigDestinationPath'] + "/" + Catalogue[Source][ImagingDetails['ColSourceName']]
 			ImagingDetails['SourcePath'] = ImagingDetails['DestinationPath'] + "/Source" 
-			ImagingDetails['ProjectNum'] = Catalogue[Source]['Name']
+			ImagingDetails['ProjectNum'] = Catalogue[Source][ImagingDetails['ColSourceName']]
 
 			#create a folder for each source and a 'Source' folder inside containing the uv files
 			if ReadFolder(ImagingDetails['DestinationPath']) == False:
@@ -707,26 +736,99 @@ def SubBandImaging(ImagingDetails):
 				ImagingDetails['Frequency'] = SubBandFrequency
 				StandardImaging(ImagingDetails)
 
-				#create input file for aegean
-				File = open(DestinationLink + "/SourcePosition.ascii",'w')
-				File.write(str(Catalogue[Source]['Best_Match_Ra_Degrees']) + " " + str(Catalogue[Source]['Best_Match_Dec_Degrees']) + "\n") 
-				File.close()
+				#create input file for aegean from the exisiting catalogue
+				if ReadFolder("SourcePosition.fits", ImagingDetails['DestinationPath']) == False:
+					col1 = fits.Column(name='ra_str', format='A50', array=np.array([Catalogue[Source][ImagingDetails['ColRA']]]))
+					col2 = fits.Column(name='dec_str', format='A50', array=np.array([Catalogue[Source][ImagingDetails['ColDEC']]]))
+					
+					col3 = fits.Column(name='ra', format='E', array=np.array([Catalogue[Source][ImagingDetails['ColRADegrees']] ]))
+					col4 = fits.Column(name='err_ra', format='D', array=np.array([Catalogue[Source][ImagingDetails['ColRADegreesErr']]]))
+					col5 = fits.Column(name='dec', format='D', array=np.array([Catalogue[Source][ImagingDetails['ColDECDegrees']]]))
+					col6 = fits.Column(name='err_dec', format='D', array=np.array([Catalogue[Source][ImagingDetails['ColDECDegreesErr']]]))
 
-				Task = "aegean "
-				Task = Task + " --measure "
-				Task = Task + " --input='" + DestinationLink + "/SourcePosition.ascii" + "'"
-				Task = Task + " --cores='" + ImagingDetails['MaxProcesses'] + "'"
-				Task = Task + " --out='" + DestinationLink + "/Catalogue-" + SubBandFrequency + ".fits'"
+					col7 = fits.Column(name='peak_flux', format='D', array=np.array([Catalogue[Source][ImagingDetails['ColPeakFlux']]]))
+					col8 = fits.Column(name='err_peak_flux', format='D', array=np.array([Catalogue[Source][ImagingDetails['ColPeakFluxErr']]]))
+					col9 = fits.Column(name='int_flux', format='D', array=np.array([Catalogue[Source][ImagingDetails['ColIntegFlux']]]))
+					col10 = fits.Column(name='err_int_flux', format='D', array=np.array([Catalogue[Source][ImagingDetails['ColIntegFluxErr']]]))
+
+					col11 = fits.Column(name='a', format='D', array=np.array([Catalogue[Source][ImagingDetails['ColMajor']]]))
+					col12 = fits.Column(name='err_a', format='D', array=np.array([Catalogue[Source][ImagingDetails['ColMajorErr']]]))
+					col13 = fits.Column(name='b', format='D', array=np.array([Catalogue[Source][ImagingDetails['ColMinor']]]))
+					col14 = fits.Column(name='err_b', format='D', array=np.array([Catalogue[Source][ImagingDetails['ColMinorErr']]]))
+					col15 = fits.Column(name='pa', format='D', array=np.array([Catalogue[Source][ImagingDetails['ColPA']]]))
+					col16 = fits.Column(name='err_pa', format='D', array=np.array([Catalogue[Source][ImagingDetails['ColPAErr']]]))
+
+					cols = fits.ColDefs([col1, col2, col3, col4, col5, col6, col7, col8, col9, col10, col11, col12, col13, col14, col15, col16])
+					tbhdu = fits.BinTableHDU.from_columns(cols)
+					tbhdu.writeto(ImagingDetails['DestinationLink'] + '/SourcePosition.fits')
+				
+				RoundNum = 0
+				SubBandImage = ""
+
+				#convert the primary beam corrected image into a fits image
+				for File in os.listdir(ImagingDetails['DestinationLink']):
+					if "pbcorr" in File:
+						if int(File[-1:]) > RoundNum:
+							SubBandImage = File			
+
+				Task = "fits "
+				Task = Task + " in='" + ImagingDetails['DestinationLink'] + "/" + SubBandImage + "'"
+				Task = Task + " out='" + ImagingDetails['DestinationLink'] + "/" + SubBandImage[:-9] + "." + SubBandImage[-1:] + ".fits'"
+				Task = Task + " op='xyout'"
 
 				print Task
 				ProcList.append(Popen(Task, shell=True))
 
 				CheckProc(0)
 
-				
+				#run the aegean source finding on the output image on the known source position
+				#Task = " /home/16749838/Data/Aegean136/aegean.py "
+				Task = " aegean.py "
+				Task = Task + " --priorize 3 "
+				Task = Task + " --input='" + ImagingDetails['DestinationLink'] + "/SourcePosition.fits'"
+				Task = Task + " --cores='" + str(ImagingDetails['MaxProcesses']) + "'"
+				Task = Task + " --out='" + str(ImagingDetails['DestinationLink']) + "/Catalogue-" + str(SubBandFrequency) + ".source." + SubBandImage[-1:] + "' "
+				Task = Task + " --table='" + str(ImagingDetails['DestinationLink']) + "/Catalogue-" + str(SubBandFrequency) + "." + SubBandImage[-1:] + ".reg" 
+				Task = Task + "," + str(ImagingDetails['DestinationLink']) + "/Catalogue-" + str(SubBandFrequency) + "." + SubBandImage[-1:] + ".ann" 
+				Task = Task + "," + str(ImagingDetails['DestinationLink']) + "/Catalogue-" + str(SubBandFrequency) + "." + SubBandImage[-1:] + ".fits" + "' '"
+				Task = Task + ImagingDetails['DestinationLink'] + "/" + SubBandImage[:-9] + "." + SubBandImage[-1:] + ".fits'" 
 
+				print Task
+				ProcList.append(Popen(Task, shell=True))
+
+				CheckProc(0)
+
+			# AegeanCatalogueHeader = fits.open(ImagingDetails['DestinationLink'] + "/Catalogue-" + SubBandFrequencies[0] + "." + SubBandImage[-1:] + "_comp.fits")
+			# AegeanCatalogue = AegeanCatalogueHeader[1].data
+
+			# for SubBandFrequencyCount, SubBandFrequency in enumerate(SubBandFrequencies):
+			# 	if SubBandFrequencyCount > 0:
+			# 		AegeanCatalogueHeaderToAdd = fits.open(ImagingDetails['DestinationLink'] + "/Catalogue-" + SubBandFrequency + "." + SubBandImage[-1:] + "_comp.fits")
+			# 		AegeanCatalogueToAdd = AegeanCatalogueHeaderToAdd[1].data
+
+
+
+					
+
+			# 		AegeanCatalogueHeaderToAdd.close()
+
+			#AegeanCatalogueHeader.close()
+
+
+
+
+			AegeanData = []
+			AegeanHeader = []
+			
+			#collect all the source information from each subband and concatonate them into one file
+			for SubBandFrequency in SubBandFrequencies:
+				AegeanHeader.append(getdata(ImagingDetails['DestinationLink'] + "/Catalogue-" + SubBandFrequency + "." + SubBandImage[-1:] + "_comp.fits", 0))
+				AegeanData.append(getdata(ImagingDetails['DestinationLink'] + "/Catalogue-" + SubBandFrequency + "." + SubBandImage[-1:] + "_comp.fits", 1))
+			print AegeanData
+			print AegeanHeader
+			fits.writeto(ImagingDetails['DestinationLink'] + "/Catalogue-.All_comp.fits", AegeanData, AegeanHeader)
+		
 			CheckProc(0)
-
 			os.system("rm " + ImagingDetails['DestinationLink'])
 
 	CatalogueHeader.close()
@@ -749,7 +851,7 @@ if ReadFolder(ImagingDetails['DestinationPath']) == False:
 
 	ImagingDetails['MaxProcesses'] -= 1
 
-	#TODO: If all files are wanted from the source then it will build the image list ================
+	#TODO: If all files are wanted from the source then it will build the image list, with an override probably ================
 
 	#if ImagingDetails['Images'] == "*":
 
