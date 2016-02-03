@@ -26,6 +26,7 @@ parser.add_argument('-T' , '-t', '--TaskSet', help='1 For Standard Imaging pipel
 parser.add_argument('-c', '--Config', help = 'Location of the calibration file. Required, No Deault.', required=True)
 parser.add_argument('-l', '--LinmosAll', help = 'A primary beam corrected image is created from each round of selfcal rather than one final image. Default = False', action = "store_true")
 parser.add_argument('-i', '--Individual', help = 'A primary beam corrected image is created for each pointing rather than one for the whole field. Default = False', action = "store_true")
+parser.add_argument('-C', '--Cleanup', help = 'Delete auxiliary files to save space. Default = False', action = "store_true")
 parser.add_argument('-r', '--Reset', help = 'Remove exisiting Files if they are present. Default = False', action = "store_true")
 args = parser.parse_args()
 
@@ -284,6 +285,10 @@ def ConvertCoord(Coordinate, Type):
 	Coordinate = Coordinate.replace(":", "m", 1)
 	Coordinate = Coordinate + "s"
 	return Coordinate
+
+def CleanUp(ImageType, Frequency, RoundNum):
+	for ImageName in ImagingDetails['Images']:
+		os.system("rm -r " ImagingDetails['DestimationLink'] + "/" + ImageName + "." + Frequency + "." + ImageType + "." + RoundNum)
 
 #run the task UVaver
 def UVaver(Image, ImagingDetails):
@@ -544,6 +549,7 @@ def StandardImaging(ImagingDetails):
 		CheckProc(0)
 
 		if args.LinmosAll == True:
+			#=============== Run Restor ==================
 			for ImageName in ImagingDetails['Images']:
 				ImageName = ImagingDetails['DestinationLink'] + "/" + ImageName + "." + str(ImagingDetails['Frequency'])
 				CheckProc(ImagingDetails['MaxProcesses'])
@@ -561,6 +567,11 @@ def StandardImaging(ImagingDetails):
 				Linmos(ImagingDetails);
 				CheckProc(0)
 
+		if args.Cleanup >= 1:
+			Cleanup("map", ImagingDetails['Frequency'], str(ImagingDetails['RoundNum']))
+			Cleanup("beam", ImagingDetails['Frequency'], str(ImagingDetails['RoundNum']))
+			Cleanup("restor", ImagingDetails['Frequency'], str(ImagingDetails['RoundNum']))
+
 		#=============== Run SelfCal ==================
 		for ImageName in ImagingDetails['Images']:
 			ImageName = ImagingDetails['DestinationLink'] + "/" + ImageName + "." + str(ImagingDetails['Frequency'])
@@ -568,12 +579,18 @@ def StandardImaging(ImagingDetails):
 			SelfCal(ImageName, ImagingDetails);
 		CheckProc(0)
 
+		if args.Cleanup >= 2:
+			Cleanup("model", ImagingDetails['Frequency'], str(ImagingDetails['RoundNum']))
+
 		#=============== Run UVaver to apply SelfCal ==================
 		for ImageName in ImagingDetails['Images']:
 			ImageName = ImagingDetails['DestinationLink'] + "/" + ImageName + "." + str(ImagingDetails['Frequency'])
 			CheckProc(ImagingDetails['MaxProcesses'])
 			UVaverSelfCal(ImageName, ImagingDetails);
 		CheckProc(0)
+
+		if args.Cleanup >= 1:
+			Cleanup("uvaver", ImagingDetails['Frequency'], str(ImagingDetails['RoundNum']))
 
 	#======================================================================================
 	#=========================== Start the Final Imaging ==================================
@@ -588,6 +605,9 @@ def StandardImaging(ImagingDetails):
 		CheckProc(ImagingDetails['MaxProcesses'])
 		Invert(ImageName, ImagingDetails);
 	CheckProc(0)
+
+	if args.Cleanup >= 1:
+		Cleanup("uvaver", ImagingDetails['Frequency'], str(ImagingDetails['RoundNum']))
 
 	#=============== Run MFClean ==================
 	for ImageName in ImagingDetails['Images']:
@@ -607,6 +627,10 @@ def StandardImaging(ImagingDetails):
 		Restor(ImageName, ImagingDetails);
 	CheckProc(0)
 
+	if args.Cleanup >= 1:
+		Cleanup("map", ImagingDetails['Frequency'], str(ImagingDetails['RoundNum']))
+		Cleanup("beam", ImagingDetails['Frequency'], str(ImagingDetails['RoundNum']))
+
 	#=============== Run Linmos ==================
 	if args.Individual == True:
 		for ImageName in ImagingDetails['Images']:
@@ -617,6 +641,9 @@ def StandardImaging(ImagingDetails):
 	else:
 		Linmos(ImagingDetails);
 		CheckProc(0)
+
+	if args.Cleanup >= 1:
+		Cleanup("restor", ImagingDetails['Frequency'], str(ImagingDetails['RoundNum']))
 
 #======================== Finish Standard CABB Imaging =====================================
 
