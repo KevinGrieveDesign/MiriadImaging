@@ -26,7 +26,7 @@ parser.add_argument('-T' , '-t', '--TaskSet', help='1 For Standard Imaging pipel
 parser.add_argument('-c', '--Config', help = 'Location of the calibration file. Required, No Deault.', required=True)
 parser.add_argument('-l', '--LinmosAll', help = 'A primary beam corrected image is created from each round of selfcal rather than one final image. Default = False', action = "store_true")
 parser.add_argument('-i', '--Individual', help = 'A primary beam corrected image is created for each pointing rather than one for the whole field. Default = False', action = "store_true")
-parser.add_argument('-C', '--Cleanup', help = 'Delete auxiliary files to save space. Default = False', action = "store_true")
+parser.add_argument('-C', '--Cleanup', help = 'Delete auxiliary files to save space. 0 For no deletion. 1 For deletion of files created during selfcal. 2 For deletion of most files, keeping only the end product.', type = int, default = 0, choices = [0,1,2])
 parser.add_argument('-r', '--Reset', help = 'Remove exisiting Files if they are present. Default = False', action = "store_true")
 args = parser.parse_args()
 
@@ -288,7 +288,7 @@ def ConvertCoord(Coordinate, Type):
 
 def CleanUp(ImageType, Frequency, RoundNum):
 	for ImageName in ImagingDetails['Images']:
-		os.system("rm -r " ImagingDetails['DestimationLink'] + "/" + ImageName + "." + Frequency + "." + ImageType + "." + RoundNum)
+		os.system("rm -r " + ImagingDetails['DestimationLink'] + "/" + ImageName + "." + Frequency + "." + ImageType + "." + RoundNum)
 
 #run the task UVaver
 def UVaver(Image, ImagingDetails):
@@ -606,7 +606,7 @@ def StandardImaging(ImagingDetails):
 		Invert(ImageName, ImagingDetails);
 	CheckProc(0)
 
-	if args.Cleanup >= 1:
+	if args.Cleanup >= 2:
 		Cleanup("uvaver", ImagingDetails['Frequency'], str(ImagingDetails['RoundNum']))
 
 	#=============== Run MFClean ==================
@@ -627,7 +627,7 @@ def StandardImaging(ImagingDetails):
 		Restor(ImageName, ImagingDetails);
 	CheckProc(0)
 
-	if args.Cleanup >= 1:
+	if args.Cleanup >= 2:
 		Cleanup("map", ImagingDetails['Frequency'], str(ImagingDetails['RoundNum']))
 		Cleanup("beam", ImagingDetails['Frequency'], str(ImagingDetails['RoundNum']))
 
@@ -642,7 +642,7 @@ def StandardImaging(ImagingDetails):
 		Linmos(ImagingDetails);
 		CheckProc(0)
 
-	if args.Cleanup >= 1:
+	if args.Cleanup >= 2:
 		Cleanup("restor", ImagingDetails['Frequency'], str(ImagingDetails['RoundNum']))
 
 #======================== Finish Standard CABB Imaging =====================================
